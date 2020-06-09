@@ -25,34 +25,24 @@ export class EntityRepository<T> {
     this.em.persistLater(entity);
   }
 
-  async findOne(where: FilterQuery<T>, populate?: string[] | boolean, orderBy?: QueryOrderMap): Promise<T | null>;
-  async findOne(where: FilterQuery<T>, populate?: FindOneOptions<T>, orderBy?: QueryOrderMap): Promise<T | null>;
-  async findOne(where: FilterQuery<T>, populate: string[] | boolean | FindOneOptions<T> = [], orderBy?: QueryOrderMap): Promise<T | null> {
-    return this.em.findOne<T>(this.entityName, where, populate as string[], orderBy);
+  async findOne(where: FilterQuery<T>, options?: FindOneOptions<T>): Promise<T | null> {
+    return this.em.findOne<T>(this.entityName, where, options);
   }
 
-  async findOneOrFail(where: FilterQuery<T>, populate?: string[] | boolean, orderBy?: QueryOrderMap): Promise<T>;
-  async findOneOrFail(where: FilterQuery<T>, populate?: FindOneOrFailOptions<T>, orderBy?: QueryOrderMap): Promise<T>;
-  async findOneOrFail(where: FilterQuery<T>, populate: string[] | boolean | FindOneOrFailOptions<T> = [], orderBy?: QueryOrderMap): Promise<T> {
-    return this.em.findOneOrFail<T>(this.entityName, where, populate as string[], orderBy);
+  async findOneOrFail(where: FilterQuery<T>, options?: FindOneOrFailOptions<T>): Promise<T> {
+    return this.em.findOneOrFail<T>(this.entityName, where, options);
   }
 
-  async find(where: FilterQuery<T>, options?: FindOptions<T>): Promise<T[]>;
-  async find(where: FilterQuery<T>, populate?: string[] | boolean, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<T[]>;
-  async find(where: FilterQuery<T>, populate: string[] | boolean | FindOptions<T> = [], orderBy: QueryOrderMap = {}, limit?: number, offset?: number): Promise<T[]> {
-    return this.em.find<T>(this.entityName, where as FilterQuery<T>, populate as string[], orderBy, limit, offset);
+  async find(where: FilterQuery<T>, options?: FindOptions<T>): Promise<T[]> {
+    return this.em.find<T>(this.entityName, where as FilterQuery<T>, options);
   }
 
-  async findAndCount(where: FilterQuery<T>, options?: FindOptions<T>): Promise<[T[], number]>;
-  async findAndCount(where: FilterQuery<T>, populate?: string[] | boolean, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<[T[], number]>;
-  async findAndCount(where: FilterQuery<T>, populate: string[] | boolean | FindOptions<T> = [], orderBy: QueryOrderMap = {}, limit?: number, offset?: number): Promise<[T[], number]> {
-    return this.em.findAndCount<T>(this.entityName, where as FilterQuery<T>, populate as string[], orderBy, limit, offset);
+  async findAndCount(where: FilterQuery<T>, options?: FindOptions<T>): Promise<[T[], number]> {
+    return this.em.findAndCount<T>(this.entityName, where as FilterQuery<T>, options);
   }
 
-  async findAll(options?: FindOptions<T>): Promise<T[]>;
-  async findAll(populate?: string[] | boolean | true, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<T[]>;
-  async findAll(populate: string[] | boolean | true | FindOptions<T> = [], orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<T[]> {
-    return this.em.find<T>(this.entityName, {}, populate as string[], orderBy, limit, offset);
+  async findAll(options?: FindOptions<T>): Promise<T[]> {
+    return this.em.find<T>(this.entityName, {}, options);
   }
 
   remove(where: T | FilterQuery<T>, flush?: false): void;
@@ -69,6 +59,7 @@ export class EntityRepository<T> {
    * @deprecated use `remove()`
    */
   removeLater(entity: AnyEntity): void {
+    // noinspection JSDeprecatedSymbols
     this.em.removeLater(entity);
   }
 

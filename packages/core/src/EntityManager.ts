@@ -67,21 +67,10 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   /**
    * Finds all entities matching your `where` query. You can pass additional options via the `options` parameter.
    */
-  async find<T>(entityName: EntityName<T>, where: FilterQuery<T>, options?: FindOptions<T>): Promise<T[]>;
-
-  /**
-   * Finds all entities matching your `where` query.
-   */
-  async find<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T>, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<T[]>;
-
-  /**
-   * Finds all entities matching your `where` query.
-   */
-  async find<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T> | FindOptions<T>, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<T[]> {
+  async find<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T> = {}): Promise<T[]> {
     entityName = Utils.className(entityName);
     where = SmartQueryHelper.processWhere(where, entityName, this.metadata);
     this.validator.validateParams(where);
-    const options = Utils.isObject<FindOptions<T>>(populate) ? populate : { populate, orderBy, limit, offset };
     options.orderBy = options.orderBy || {};
     options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy);
     const results = await this.driver.find<T>(entityName, where, options, this.transactionContext);
@@ -107,21 +96,9 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
    * Calls `em.find()` and `em.count()` with the same arguments (where applicable) and returns the results as tuple
    * where first element is the array of entities and the second is the count.
    */
-  async findAndCount<T>(entityName: EntityName<T>, where: FilterQuery<T>, options?: FindOptions<T>): Promise<[T[], number]>;
-
-  /**
-   * Calls `em.find()` and `em.count()` with the same arguments (where applicable) and returns the results as tuple
-   * where first element is the array of entities and the second is the count.
-   */
-  async findAndCount<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T>, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<[T[], number]>;
-
-  /**
-   * Calls `em.find()` and `em.count()` with the same arguments (where applicable) and returns the results as tuple
-   * where first element is the array of entities and the second is the count.
-   */
-  async findAndCount<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T> | FindOptions<T>, orderBy?: QueryOrderMap, limit?: number, offset?: number): Promise<[T[], number]> {
+  async findAndCount<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T> = {}): Promise<[T[], number]> {
     const [entities, count] = await Promise.all([
-      this.find(entityName, where, populate as string[], orderBy, limit, offset),
+      this.find(entityName, where, options),
       this.count(entityName, where),
     ]);
 
@@ -131,19 +108,8 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   /**
    * Finds first entity matching your `where` query.
    */
-  async findOne<T>(entityName: EntityName<T>, where: FilterQuery<T>, options?: FindOneOptions<T>): Promise<T | null>;
-
-  /**
-   * Finds first entity matching your `where` query.
-   */
-  async findOne<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T>, orderBy?: QueryOrderMap): Promise<T | null>;
-
-  /**
-   * Finds first entity matching your `where` query.
-   */
-  async findOne<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T> | FindOneOptions<T>, orderBy?: QueryOrderMap): Promise<T | null> {
+  async findOne<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOptions<T> = {}): Promise<T | null> {
     entityName = Utils.className(entityName);
-    const options = Utils.isObject<FindOneOptions<T>>(populate) ? populate : { populate, orderBy };
     const meta = this.metadata.get<T>(entityName);
     this.validator.validateEmptyWhere(where);
     where = SmartQueryHelper.processWhere(where as FilterQuery<T>, entityName, this.metadata);
@@ -174,28 +140,13 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
    * You can override the factory for creating this method via `options.failHandler` locally
    * or via `Configuration.findOneOrFailHandler` globally.
    */
-  async findOneOrFail<T>(entityName: EntityName<T>, where: FilterQuery<T>, options?: FindOneOrFailOptions<T>): Promise<T>;
-
-  /**
-   * Finds first entity matching your `where` query. If nothing found, it will throw an error.
-   * You can override the factory for creating this method via `options.failHandler` locally
-   * or via `Configuration.findOneOrFailHandler` globally.
-   */
-  async findOneOrFail<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T>, orderBy?: QueryOrderMap): Promise<T>;
-
-  /**
-   * Finds first entity matching your `where` query. If nothing found, it will throw an error.
-   * You can override the factory for creating this method via `options.failHandler` locally
-   * or via `Configuration.findOneOrFailHandler` globally.
-   */
-  async findOneOrFail<T>(entityName: EntityName<T>, where: FilterQuery<T>, populate?: Populate<T> | FindOneOrFailOptions<T>, orderBy?: QueryOrderMap): Promise<T> {
-    const entity = await this.findOne(entityName, where, populate as string[], orderBy);
+  async findOneOrFail<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOrFailOptions<T> = {}): Promise<T> {
+    const entity = await this.findOne(entityName, where, options);
 
     if (!entity) {
-      const options = Utils.isObject<FindOneOrFailOptions<T>>(populate) ? populate : {};
-      options.failHandler = options.failHandler || this.config.get('findOneOrFailHandler');
+      const failHandler = options.failHandler || this.config.get('findOneOrFailHandler');
       entityName = Utils.className(entityName);
-      throw options.failHandler!(entityName, where);
+      throw failHandler(entityName, where as Dictionary);
     }
 
     return entity;

@@ -22,6 +22,15 @@ TODO multiple packages
 
 TODO QB getter, knex getter, aggregate...
 
+## Dedicated `populate/orderBy/limit/offset` parameters are removed in favour of `FindOptions`
+
+TODO
+
+```diff
+-em.findOne(Author, +req.id, ['books'], { name: 'asc' });
++em.findOne(Author, +req.id, { populate: ['books'], orderBy: { name: 'asc' } });
+```
+
 ## Different default `pivotTable`
 
 Implementation of `UnderscoreNamingStrategy` and `EntityCaseNamingStrategy` 

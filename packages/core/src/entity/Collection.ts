@@ -123,10 +123,7 @@ export class Collection<T extends AnyEntity<T>, O extends AnyEntity<O> = AnyEnti
     this.dirty = dirty && !!this.property.owner; // set dirty flag only to owning side
   }
 
-  async init(options?: InitOptions<T>): Promise<this>;
-  async init(populate?: string[], where?: FilterQuery<T>, orderBy?: QueryOrderMap): Promise<this>;
-  async init(populate: string[] | InitOptions<T> = [], where?: FilterQuery<T>, orderBy?: QueryOrderMap): Promise<this> {
-    const options = Utils.isObject<InitOptions<T>>(populate) ? populate : { populate, where, orderBy };
+  async init(options: InitOptions<T> = {}): Promise<this> {
     const em = wrap(this.owner, true).__em;
 
     if (!em) {
@@ -149,11 +146,11 @@ export class Collection<T extends AnyEntity<T>, O extends AnyEntity<O> = AnyEnti
       return this;
     }
 
-    where = this.createCondition<T>(options.where);
+    const where = this.createCondition<T>(options.where);
     const order = [...this.items]; // copy order of references
     const customOrder = !!options.orderBy;
-    orderBy = this.createOrderBy(options.orderBy);
-    const items = await em.find<T>(this.property.type, where, options.populate, orderBy);
+    options.orderBy = this.createOrderBy(options.orderBy);
+    const items = await em.find<T>(this.property.type, where, options);
 
     if (!customOrder) {
       this.reorderItems(items, order);
