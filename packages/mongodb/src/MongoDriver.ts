@@ -23,7 +23,7 @@ export class MongoDriver extends DatabaseDriver<MongoConnection> {
   }
 
   async find<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, options: FindOptions<T>, ctx?: Transaction<ClientSession>): Promise<T[]> {
-    const fields = this.buildFields(entityName, options.populate as PopulateOptions<T>[] || [], options.fields);
+    const fields = this.buildFields(entityName, options.populate as unknown as PopulateOptions<T>[] || [], options.fields);
     where = this.renameFields(entityName, where);
     const res = await this.rethrow(this.getConnection('read').find<T>(entityName, where, options.orderBy, options.limit, options.offset, fields, ctx));
 
@@ -35,7 +35,7 @@ export class MongoDriver extends DatabaseDriver<MongoConnection> {
       where = this.buildFilterById(entityName, where as string);
     }
 
-    const fields = this.buildFields(entityName, options.populate as PopulateOptions<T>[] || [], options.fields);
+    const fields = this.buildFields(entityName, options.populate as unknown as PopulateOptions<T>[] || [], options.fields);
     where = this.renameFields(entityName, where);
     const res = await this.rethrow(this.getConnection('read').find<T>(entityName, where, options.orderBy, 1, undefined, fields, ctx));
 

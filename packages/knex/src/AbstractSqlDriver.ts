@@ -32,7 +32,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
   async find<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, options: FindOptions<T> = {}, ctx?: Transaction<KnexTransaction>): Promise<T[]> {
     options = { populate: [], orderBy: {}, ...options };
     const meta = this.metadata.get(entityName);
-    const populate = this.autoJoinOneToOneOwner(meta, options.populate as PopulateOptions<T>[]);
+    const populate = this.autoJoinOneToOneOwner(meta, options.populate as unknown as PopulateOptions<T>[]);
     const joinedProps = this.joinedProps(meta, populate);
     const qb = this.createQueryBuilder(entityName, ctx, !!ctx);
     const fields = this.buildFields(meta, populate, joinedProps, qb, options.fields);
@@ -67,7 +67,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
   async findOne<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, options?: FindOneOptions<T>, ctx?: Transaction<KnexTransaction>): Promise<T | null> {
     const opts = { populate: [], ...(options || {}) } as FindOptions<T>;
     const meta = this.metadata.get(entityName);
-    const populate = this.autoJoinOneToOneOwner(meta, opts.populate as PopulateOptions<T>[]);
+    const populate = this.autoJoinOneToOneOwner(meta, opts.populate as unknown as PopulateOptions<T>[]);
     const joinedProps = this.joinedProps(meta, populate);
 
     if (joinedProps.length === 0) {

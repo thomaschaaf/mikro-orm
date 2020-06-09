@@ -153,7 +153,7 @@ export class EntityLoader {
     where = { [fk]: { $in: ids }, ...(where as Dictionary) };
     orderBy = orderBy || prop.orderBy || { [fk]: QueryOrder.ASC };
 
-    return this.em.find<T>(prop.type, where, { orderBy, refresh, populate: populate.children });
+    return this.em.find<T>(prop.type, where, { orderBy, refresh, populate: populate.children as unknown as string[] });
   }
 
   private async populateField<T extends AnyEntity<T>>(entityName: string, entities: T[], populate: PopulateOptions<T>, where: FilterQuery<T>, orderBy: QueryOrderMap, refresh: boolean): Promise<void> {

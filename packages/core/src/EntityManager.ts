@@ -72,7 +72,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     where = SmartQueryHelper.processWhere(where, entityName, this.metadata);
     this.validator.validateParams(where);
     options.orderBy = options.orderBy || {};
-    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy);
+    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy) as unknown as true;
     const results = await this.driver.find<T>(entityName, where, options, this.transactionContext);
 
     if (results.length === 0) {
@@ -87,7 +87,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
 
     const unique = Utils.unique(ret);
-    await this.entityLoader.populate<T>(entityName, unique, options.populate as PopulateOptions<T>[], where, options.orderBy, options.refresh);
+    await this.entityLoader.populate<T>(entityName, unique, options.populate as unknown as PopulateOptions<T>[], where, options.orderBy, options.refresh);
 
     return unique;
   }
@@ -122,7 +122,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
 
     this.validator.validateParams(where);
-    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy);
+    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy) as unknown as true;
     const data = await this.driver.findOne(entityName, where, options, this.transactionContext);
 
     if (!data) {
@@ -551,7 +551,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     const meta = this.metadata.get(entityName);
 
     if (Utils.isPlainObject(populate)) {
-      return this.preparePopulateObject(meta, populate as PopulateMap<T>, strategy);
+      return this.preparePopulateObject(meta, populate as unknown as true, strategy);
     }
 
     if (Array.isArray(populate)) {
@@ -561,7 +561,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
         }
 
         return field;
-      });
+      }) as unknown as string[];
     }
 
     const ret: PopulateOptions<T>[] = this.entityLoader.normalizePopulate<T>(entityName, populate as true);

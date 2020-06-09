@@ -34,7 +34,7 @@ export type PrimaryMap<T extends AnyEntity<T>> = Record<keyof T, Primary<T>>;
 export type IPrimaryKeyValue = number | string | bigint | { toHexString(): string };
 export type IPrimaryKey<T extends IPrimaryKeyValue = IPrimaryKeyValue> = T;
 
-export type IsScalar<T> = T extends number | string | bigint | Date | RegExp ? true : never;
+export type IsScalar<T> = T extends boolean | number | string | bigint | Date | RegExp ? true : never;
 export type IsEntity<T> = T extends Reference<T> | { [PrimaryKeyType]: any } | { _id: any } | { uuid: string } | { id: number | string | bigint } ? true : never;
 
 export type OneOrArray<T> = T | T[];

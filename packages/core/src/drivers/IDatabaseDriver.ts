@@ -1,10 +1,10 @@
-import { EntityData, EntityMetadata, EntityProperty, AnyEntity, FilterQuery, Primary, Dictionary, QBFilterQuery, CollectionItem, ReferencedEntity } from '../typings';
+import { EntityData, EntityMetadata, EntityProperty, AnyEntity, FilterQuery, Primary, Dictionary, QBFilterQuery, IsScalar } from '../typings';
 import { Connection, QueryResult, Transaction } from '../connections';
 import { QueryOrderMap, QueryFlag } from '../enums';
 import { Platform } from '../platforms';
 import { MetadataStorage } from '../metadata';
 import { LockMode } from '../unit-of-work';
-import { Collection, LoadStrategy } from '../entity';
+import { Collection, LoadStrategy, Reference } from '../entity';
 import { EntityManager } from '../index';
 import { DriverException } from '../exceptions';
 
@@ -93,9 +93,10 @@ export interface FindOneOptions<T> extends Omit<FindOptions<T>, 'limit' | 'offse
   lockVersion?: number | Date;
 }
 
-export type PopulateChildren<T> = { [K in keyof T]?: PopulateMap<ReferencedEntity<T[K]> | CollectionItem<T[K]>> };
-export type PopulateMap<T> = boolean | LoadStrategy | PopulateChildren<T> | [LoadStrategy, PopulateChildren<T>];
-export type Populate<T> = (string | PopulateOptions<T>)[] | boolean | PopulateMap<T>;
+export type ExpandProperty<T> = T extends Reference<infer U> ? U : T extends Collection<infer U> ? U : T;
+export type PopulateChildren<T> = { [K in keyof T]?: PopulateMap<ExpandProperty<T[K]>> };
+export type PopulateMap<T> = true extends IsScalar<T> ? boolean : (boolean | LoadStrategy | PopulateChildren<T>);
+export type Populate<T> = (keyof T | string)[] | boolean | PopulateMap<T>;
 
 export type PopulateOptions<T> = {
   field: string;

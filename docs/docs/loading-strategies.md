@@ -14,7 +14,7 @@ The loading strategy can be specified both at mapping time and when loading enti
 For example, given the following entities:
 
 ```typescript
-import { Entity, LoadStrategy, OneToMany, ManyToOne } from 'mikro-orm';
+import { Entity, OneToMany, ManyToOne } from 'mikro-orm';
 
 @Entity()
 export class Author {
@@ -66,7 +66,10 @@ This also works for nested populates:
 const author = await orm.em.findOne(Author, 1, { populate: { books: LoadStrategy.JOINED } });
 
 // two levels
-const author = await orm.em.findOne(Author, 1, { populate: {
-  books: [LoadStrategy.JOINED, { publisher: LoadStrategy.JOINED }]
-} });
+const author = await orm.em.findOne(Author, 1, {
+  populate: {
+    books: { publisher: true },
+  },
+  strategy: LoadStrategy.JOINED,
+});
 ```
