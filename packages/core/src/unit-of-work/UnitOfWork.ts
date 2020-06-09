@@ -23,7 +23,7 @@ export class UnitOfWork {
   private readonly orphanRemoveStack: AnyEntity[] = [];
   private readonly changeSets: ChangeSet<AnyEntity>[] = [];
   private readonly collectionUpdates: Collection<AnyEntity>[] = [];
-  private readonly extraUpdates: [AnyEntity, string, AnyEntity | Reference<AnyEntity>][] = [];
+  private readonly extraUpdates: [AnyEntity, string, AnyEntity | Reference<AnyEntity> | Collection<AnyEntity>][] = [];
   private readonly metadata = this.em.getMetadata();
   private readonly platform = this.em.getDriver().getPlatform();
   private readonly changeSetComputer = new ChangeSetComputer(this.em.getValidator(), this.originalEntityData, this.identifierMap, this.collectionUpdates, this.removeStack, this.metadata, this.platform);
@@ -55,7 +55,7 @@ export class UnitOfWork {
    */
   getById<T extends AnyEntity<T>>(entityName: string, id: Primary<T> | Primary<T>[]): T {
     const root = Utils.getRootEntity(this.metadata, this.metadata.get(entityName));
-    const hash = Utils.getPrimaryKeyHash(Utils.asArray(id) as string[]);
+    const hash = Utils.getPrimaryKeyHash(Utils.asArray(id) as unknown as string[]);
     const token = `${root.name}-${hash}`;
 
     return this.identityMap[token] as T;
@@ -407,7 +407,7 @@ export class UnitOfWork {
     const reference = this.unwrapReference(entity, prop);
 
     if ([ReferenceType.MANY_TO_ONE, ReferenceType.ONE_TO_ONE].includes(prop.reference) && reference && !Utils.isEntity(reference)) {
-      entity[prop.name] = this.em.getReference(prop.type, reference as Primary<T[string & keyof T]>, !!prop.wrappedReference) as T[string & keyof T];
+      entity[prop.name] = this.em.getReference(prop.type, reference as Primary<T>, !!prop.wrappedReference) as unknown as T[string & keyof T];
     }
 
     const isCollection = [ReferenceType.ONE_TO_MANY, ReferenceType.MANY_TO_MANY].includes(prop.reference);

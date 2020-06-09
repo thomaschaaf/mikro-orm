@@ -272,7 +272,7 @@ describe('Joined loading strategy', () => {
     orm.em.clear();
 
     const a2 = await orm.em.findOneOrFail(Author2, 1);
-    await orm.em.populate(a2, 'books2');
+    await orm.em.populateOne(a2, ['books2']);
     expect(a2.books2).toHaveLength(2);
   });
 

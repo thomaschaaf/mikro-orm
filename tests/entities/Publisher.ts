@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Collection, Entity, ManyToMany, OneToMany, PrimaryKey, Property, BeforeCreate, Enum, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Collection, Entity, ManyToMany, OneToMany, PrimaryKey, Property, BeforeCreate, Enum, SerializedPrimaryKey, PrimaryKeyProp } from '@mikro-orm/core';
 import { Book } from './Book';
 import { Test } from './test.model';
 import { PublisherType } from './PublisherType';
@@ -24,6 +24,8 @@ export class Publisher {
 
   @Enum(() => PublisherType)
   type = PublisherType.LOCAL;
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
   constructor(name = 'asd', type = PublisherType.LOCAL) {
     this.name = name;

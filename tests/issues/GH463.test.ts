@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, PrimaryKey, Property, MikroORM, Index, Unique } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, Index, Unique, PrimaryKeyProp } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 import { SchemaGenerator } from '@mikro-orm/knex';
 
@@ -15,6 +15,8 @@ abstract class A {
   @Unique()
   @Property()
   bar?: string;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

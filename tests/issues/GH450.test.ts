@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Collection, Entity, ManyToMany, ManyToOne, MikroORM, PrimaryKey, Property, wrap } from '@mikro-orm/core';
+import { Collection, Entity, ManyToMany, ManyToOne, MikroORM, PrimaryKey, PrimaryKeyProp, Property, wrap } from '@mikro-orm/core';
 import { SchemaGenerator } from '@mikro-orm/knex';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
@@ -17,6 +17,8 @@ class TaskAssignee {
 
   @PrimaryKey({ name: 'id' })
   userid!: number;
+
+  [PrimaryKeyProp]: 'userid';
 
   constructor(avatar: string, firstName: string, lastName: string) {
     this.avatar = avatar;
@@ -37,6 +39,8 @@ class Task {
 
   @PrimaryKey()
   id!: number;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

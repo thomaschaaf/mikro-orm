@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, OneToOne, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, OneToOne, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 import { FooBaz } from './FooBaz';
 
 @Entity()
@@ -19,5 +19,7 @@ export default class FooBar {
 
   @OneToOne()
   fooBar!: FooBar;
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
 }

@@ -2,7 +2,7 @@ import { inspect } from 'util';
 import { Collection } from './Collection';
 import { SCALAR_TYPES } from './EntityFactory';
 import { EntityManager } from '../EntityManager';
-import { AnyEntity, EntityData, EntityMetadata, EntityProperty } from '../typings';
+import { AnyEntity, EntityData, EntityMetadata, EntityProperty, Primary } from '../typings';
 import { Utils } from '../utils';
 import { ReferenceType } from './enums';
 import { Reference } from './Reference';
@@ -103,7 +103,7 @@ export class EntityAssigner {
       entity[prop.name] = value;
       valid = true;
     } else if (Utils.isPrimaryKey(value, true)) {
-      entity[prop.name] = Utils.wrapReference(em.getReference<T>(prop.type, value), prop);
+      entity[prop.name] = Utils.wrapReference(em.getReference<T>(prop.type, value as Primary<T>), prop);
       valid = true;
     } else if (Utils.isObject<T[keyof T]>(value) && options.merge) {
       entity[prop.name] = Utils.wrapReference(em.merge(prop.type, value), prop);
@@ -140,7 +140,7 @@ export class EntityAssigner {
     }
 
     if (Utils.isPrimaryKey(item)) {
-      return em.getReference(prop.type, item);
+      return em.getReference(prop.type, item as Primary<T>);
     }
 
     if (Utils.isObject<T>(item) && options.merge) {

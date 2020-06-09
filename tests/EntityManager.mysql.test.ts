@@ -50,7 +50,7 @@ describe('EntityManagerMySql', () => {
   test('should return mysql driver', async () => {
     const driver = orm.em.getDriver();
     expect(driver).toBeInstanceOf(MySqlDriver);
-    await expect(driver.findOne(Book2.name, { title: 'bar' })).resolves.toBeNull();
+    await expect(driver.findOne<Book2>(Book2.name, { title: 'bar' })).resolves.toBeNull();
     const author = await driver.nativeInsert(Author2.name, { name: 'author', email: 'email' });
     const tag = await driver.nativeInsert(BookTag2.name, { name: 'tag name' });
     expect((await driver.nativeInsert(Book2.name, { uuid: v4(), author: author.insertId, tags: [tag.insertId] })).insertId).not.toBeNull();
@@ -72,7 +72,7 @@ describe('EntityManagerMySql', () => {
     expect(driver.getPlatform().usesImplicitTransactions()).toBe(true);
     expect(driver.getPlatform().denormalizePrimaryKey(1)).toBe(1);
     expect(driver.getPlatform().denormalizePrimaryKey('1')).toBe('1');
-    await expect(driver.find(BookTag2.name, { books: { $in: [1] } })).resolves.not.toBeNull();
+    await expect(driver.find<BookTag2>(BookTag2.name, { books: { $in: ['1'] } })).resolves.not.toBeNull();
     await expect(driver.ensureIndexes()).rejects.toThrowError('MySqlDriver does not use ensureIndexes');
 
     const conn = driver.getConnection();
@@ -215,9 +215,9 @@ describe('EntityManagerMySql', () => {
       affectedRows: 1,
       insertId: 0,
     });
-    const fooBazRef = orm.em.getReference<FooBaz2>(FooBaz2, 0);
+    const fooBaz = orm.em.getReference(FooBaz2, 0);
     const fooBar = FooBar2.create('testBar');
-    fooBar.baz = Reference.create(fooBazRef);
+    fooBar.baz = fooBaz;
     await orm.em.persistAndFlush(fooBar);
     orm.em.clear();
     const repo = orm.em.getRepository(FooBar2);
@@ -378,11 +378,11 @@ describe('EntityManagerMySql', () => {
     orm.em.clear();
 
     const jon = (await authorRepository.findOne({ name: 'Jon Snow' }))!;
-    await orm.em.populate(jon, ['books', 'favouriteBook']);
+    await orm.em.populateOne(jon, ['books', 'favouriteBook']);
     const authors = await authorRepository.findAll();
-    await orm.em.populate<Author2>(authors, ['books', 'favouriteBook'], { books: '123' });
+    await orm.em.populate(authors, ['books', 'favouriteBook'], { books: '123' });
     expect(await authorRepository.findOne({ email: 'not existing' })).toBeNull();
-    await expect(orm.em.populate<Author2>([], ['books', 'favouriteBook'])).resolves.toEqual([]);
+    await expect(orm.em.populate([], ['books', 'favouriteBook'])).resolves.toEqual([]);
 
     // count test
     const count = await authorRepository.count();
@@ -942,45 +942,45 @@ describe('EntityManagerMySql', () => {
 
     // test M:N lazy load
     orm.em.clear();
-    let book = (await orm.em.findOne(Book2, book1.uuid))!;
-    expect(book.tags.isInitialized()).toBe(false);
-    await book.tags.init();
-    expect(book.tags.isInitialized()).toBe(true);
-    expect(book.tags.count()).toBe(2);
-    expect(book.tags.getItems()[0]).toBeInstanceOf(BookTag2);
-    expect(book.tags.getItems()[0].id).toBeDefined();
-    expect(wrap(book.tags.getItems()[0]).isInitialized()).toBe(true);
+    const b1 = (await orm.em.findOne(Book2, book1.uuid))!;
+    expect(b1.tags.isInitialized()).toBe(false);
+    await b1.tags.init();
+    expect(b1.tags.isInitialized()).toBe(true);
+    expect(b1.tags.count()).toBe(2);
+    expect(b1.tags.getItems()[0]).toBeInstanceOf(BookTag2);
+    expect(b1.tags.getItems()[0].id).toBeDefined();
+    expect(wrap(b1.tags.getItems()[0]).isInitialized()).toBe(true);
 
     // test collection CRUD
     // remove
-    expect(book.tags.count()).toBe(2);
-    book.tags.remove(tag1);
-    await orm.em.persistAndFlush(book);
+    expect(b1.tags.count()).toBe(2);
+    b1.tags.remove(tag1);
+    await orm.em.persistAndFlush(b1);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(1);
+    const b2 = (await orm.em.findOne(Book2, book1.uuid, { populate: ['tags'] }))!;
+    expect(b2.tags.count()).toBe(1);
 
     // add
-    book.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
-    book.tags.add(new BookTag2('fresh'));
-    await orm.em.persistAndFlush(book);
+    b2.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
+    b2.tags.add(new BookTag2('fresh'));
+    await orm.em.persistAndFlush(b2);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(3);
+    const b3 = (await orm.em.findOne(Book2, book1.uuid, { populate: ['tags'] }))!;
+    expect(b3.tags.count()).toBe(3);
 
     // contains
-    expect(book.tags.contains(tag1)).toBe(true);
-    expect(book.tags.contains(tag2)).toBe(false);
-    expect(book.tags.contains(tag3)).toBe(true);
-    expect(book.tags.contains(tag4)).toBe(false);
-    expect(book.tags.contains(tag5)).toBe(false);
+    expect(b3.tags.contains(tag1)).toBe(true);
+    expect(b3.tags.contains(tag2)).toBe(false);
+    expect(b3.tags.contains(tag3)).toBe(true);
+    expect(b3.tags.contains(tag4)).toBe(false);
+    expect(b3.tags.contains(tag5)).toBe(false);
 
     // removeAll
-    book.tags.removeAll();
-    await orm.em.persistAndFlush(book);
+    b3.tags.removeAll();
+    await orm.em.persistAndFlush(b3);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(0);
+    const b4 = (await orm.em.findOne(Book2, book1.uuid, { populate: ['tags'] }))!;
+    expect(b4.tags.count()).toBe(0);
   });
 
   test('bigint support', async () => {

@@ -1,4 +1,4 @@
-import { BeforeCreate, Collection, PrimaryKey, Property, ReferenceType, wrap } from '@mikro-orm/core';
+import { BeforeCreate, Collection, PrimaryKey, PrimaryKeyProp, Property, ReferenceType, wrap } from '@mikro-orm/core';
 
 export abstract class BaseEntity2 {
 
@@ -7,6 +7,8 @@ export abstract class BaseEntity2 {
 
   @Property({ persist: false })
   hookTest = false;
+
+  [PrimaryKeyProp]: 'id';
 
   protected constructor() {
     const props = wrap(this, true).__meta.properties;

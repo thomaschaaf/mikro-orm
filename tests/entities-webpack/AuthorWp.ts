@@ -1,4 +1,4 @@
-import { Collection, Entity, OneToMany, Property, PrimaryKey } from '@mikro-orm/core';
+import { Collection, Entity, OneToMany, Property, PrimaryKey, PrimaryKeyProp } from '@mikro-orm/core';
 import { BookWp } from './index';
 
 @Entity({ tableName: 'author2' })
@@ -18,5 +18,7 @@ export class AuthorWp {
 
   @OneToMany(() => BookWp, book => book.author)
   books = new Collection<BookWp>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }

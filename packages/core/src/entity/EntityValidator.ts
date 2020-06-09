@@ -63,7 +63,7 @@ export class EntityValidator {
     }
 
     if (Array.isArray(params)) {
-      return params.forEach((item: any) => this.validateParams(item, type, field));
+      return (params as any[]).forEach(item => this.validateParams(item, type, field));
     }
 
     if (Utils.isObject(params)) {

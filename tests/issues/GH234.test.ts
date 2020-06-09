@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Collection, Entity, Logger, ManyToMany, MikroORM, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, Entity, Logger, ManyToMany, MikroORM, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { SqliteDriver, SchemaGenerator } from '@mikro-orm/sqlite';
 import { BASE_DIR } from '../bootstrap';
 
@@ -16,6 +16,8 @@ export class A {
   @ManyToMany(() => B, b => b.aCollection)
   bCollection: Collection<B> = new Collection<B>(this);
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -29,6 +31,8 @@ export class B {
 
   @ManyToMany(() => A, undefined, { fixedOrder: true })
   aCollection: Collection<A> = new Collection<A>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -70,14 +74,14 @@ describe('GH issue 234', () => {
     const logger = new Logger(mock, true);
     Object.assign(orm.config, { logger });
     orm.config.set('highlight', false);
-    const res1 = await orm.em.find<B>(B, { aCollection: [1, 2, 3] }, { populate: ['aCollection'] });
+    const res1 = await orm.em.find(B, { aCollection: [1, 2, 3] }, { populate: ['aCollection'] });
     expect(mock.mock.calls[0][0]).toMatch('select `e0`.* from `b` as `e0` left join `b_a_collection` as `e1` on `e0`.`id` = `e1`.`b_id` where `e1`.`a_id` in (?, ?, ?)');
     expect(mock.mock.calls[1][0]).toMatch('select `e0`.*, `e1`.`a_id`, `e1`.`b_id` from `a` as `e0` left join `b_a_collection` as `e1` on `e0`.`id` = `e1`.`a_id` where `e1`.`b_id` in (?) order by `e1`.`id` asc');
     expect(res1.map(b => b.id)).toEqual([b.id]);
 
     orm.em.clear();
     mock.mock.calls.length = 0;
-    const res2 = await orm.em.find<A>(A, { bCollection: [1, 2, 3] }, { populate: ['bCollection'] });
+    const res2 = await orm.em.find(A, { bCollection: [1, 2, 3] }, { populate: ['bCollection'] });
     expect(mock.mock.calls[0][0]).toMatch('select `e0`.* from `a` as `e0` left join `b_a_collection` as `e1` on `e0`.`id` = `e1`.`a_id` where `e1`.`b_id` in (?, ?, ?)');
     expect(mock.mock.calls[1][0]).toMatch('select `e0`.*, `e1`.`b_id`, `e1`.`a_id` from `b` as `e0` left join `b_a_collection` as `e1` on `e0`.`id` = `e1`.`b_id` where `e1`.`a_id` in (?, ?, ?) order by `e1`.`id` asc');
     expect(res2.map(a => a.id)).toEqual([a1.id, a2.id, a3.id]);

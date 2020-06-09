@@ -2,7 +2,7 @@ import { MetadataStorage } from '../metadata';
 import { AnyEntity, Dictionary } from '../typings';
 
 function createDecorator(options: IndexOptions | UniqueOptions, unique: boolean) {
-  return function (target: AnyEntity, propertyName?: string) {
+  return function <T>(target: T & Dictionary, propertyName?: string) {
     const meta = MetadataStorage.getMetadataFromDecorator(propertyName ? target.constructor : target);
     options.properties = options.properties || propertyName;
     const key = unique ? 'uniques' : 'indexes';

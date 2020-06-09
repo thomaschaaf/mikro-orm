@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, OneToOne, PrimaryKey, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, OneToOne, PrimaryKey, PrimaryKeyProp, SerializedPrimaryKey } from '@mikro-orm/core';
 import { Dup1 } from './dup1.model';
 
 @Entity()
@@ -13,5 +13,7 @@ export class Dup2 {
 
   @OneToOne({ type: 'Dup1', owner: true })
   dup12?: Dup1;
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
 }

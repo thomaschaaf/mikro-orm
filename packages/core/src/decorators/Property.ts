@@ -4,9 +4,12 @@ import { Cascade, EntityValidator, ReferenceType, LoadStrategy } from '../entity
 import { EntityName, EntityProperty, AnyEntity, Constructor } from '../typings';
 import { Type } from '../types';
 
-export function Property<T>(options: PropertyOptions<T> = {}) {
-  return function (target: AnyEntity, propertyName: string) {
-    const meta = MetadataStorage.getMetadataFromDecorator(target.constructor);
+// allow `any` in the target so we get around `Value of type 'typeof Address1' has no properties in common with type 'AnyEntity<any>'. Did you mean to call it?`
+// this allows to not require `PrimaryKeyProp` in embeddables (where only @Property decorator is allowed), but be strict in the regular entities, where we need it
+// in other words, it allows to require `PrimaryKeyProp` only when some additional properties are defined (when other than `@Property` decorator is used)
+export function Property<T extends AnyEntity<T>>(options: PropertyOptions<T> = {}): (target: T | unknown, propertyName: string) => void {
+  return function (target: T | unknown, propertyName: string) {
+    const meta = MetadataStorage.getMetadataFromDecorator((target as T).constructor);
     const desc = Object.getOwnPropertyDescriptor(target, propertyName) || {};
     EntityValidator.validateSingleDecorator(meta, propertyName);
     const name = options.name || propertyName;

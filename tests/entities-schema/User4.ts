@@ -1,10 +1,11 @@
-import { EntitySchema } from '@mikro-orm/core';
+import { EntitySchema, PrimaryKeyProp } from '@mikro-orm/core';
 
 export class User4 {
 
   id: string;
   email: string;
   agreedToTerms?: Date;
+  [PrimaryKeyProp]: 'id';
 
   constructor(id: string, email: string) {
     this.id = id;

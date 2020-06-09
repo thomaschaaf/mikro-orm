@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryKey,
-  Property,
-  MikroORM,
-  ReflectMetadataProvider,
-  SerializedPrimaryKey,
-} from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, ReflectMetadataProvider, SerializedPrimaryKey, PrimaryKeyProp } from '@mikro-orm/core';
 import { ObjectId } from 'mongodb';
 import { MongoDriver } from '@mikro-orm/mongodb';
 
@@ -20,6 +13,8 @@ class A {
 
   @Property()
   name: string;
+
+  [PrimaryKeyProp]: '_id';
 
   constructor(name: string) {
     this.name = name;
@@ -39,6 +34,8 @@ class B {
   @Property()
   name: string;
 
+  [PrimaryKeyProp]: '_id';
+
   constructor(name: string) {
     this.name = name;
   }
@@ -57,12 +54,13 @@ class C {
   @Property()
   name: string;
 
+  [PrimaryKeyProp]: '_id';
+
   constructor(name: string) {
     this.name = name;
   }
 
 }
-
 
 describe('GH issue 349', () => {
 

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 
 @Entity()
 export class Dup1 {
@@ -12,5 +12,7 @@ export class Dup1 {
 
   @Property({ type: 'string' })
   name1?: string;
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
 }

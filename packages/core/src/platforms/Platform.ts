@@ -1,6 +1,6 @@
 import { EntityRepository } from '../entity';
 import { NamingStrategy, UnderscoreNamingStrategy } from '../naming-strategy';
-import { Constructor, Dictionary, EntityProperty, IPrimaryKey, Primary } from '../typings';
+import { AnyEntity, Constructor, Dictionary, EntityProperty, IPrimaryKey, Primary } from '../typings';
 import { ExceptionConverter } from './ExceptionConverter';
 
 export abstract class Platform {
@@ -115,7 +115,7 @@ export abstract class Platform {
     return !marshall;
   }
 
-  getRepositoryClass<T>(): Constructor<EntityRepository<T>> {
+  getRepositoryClass<T extends AnyEntity<T>>(): Constructor<EntityRepository<T>> {
     return EntityRepository;
   }
 

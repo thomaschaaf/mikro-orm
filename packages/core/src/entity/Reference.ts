@@ -1,9 +1,9 @@
-import { Dictionary, Primary } from '../typings';
+import { Dictionary, EntityType, IdentifiedReference, Primary, PrimaryProperty, Relation } from '../typings';
 import { wrap } from './wrap';
 
-export type IdentifiedReference<T, PK extends keyof T = 'id' & keyof T> = { [K in PK]: T[K] } & Reference<T>;
+export class Reference<T> implements Relation<T> {
 
-export class Reference<T> {
+  [EntityType]?: T;
 
   constructor(private entity: T) {
     this.set(entity);
@@ -26,25 +26,26 @@ export class Reference<T> {
     }
   }
 
-  static create<T, PK extends keyof T>(entity: T | IdentifiedReference<T, PK>): IdentifiedReference<T, PK> {
+  static create<T>(entity: T | IdentifiedReference<T>): IdentifiedReference<T> {
     if (entity instanceof Reference) {
       return entity;
     }
 
-    return new Reference(entity) as IdentifiedReference<T, PK>;
+    return new Reference(entity) as IdentifiedReference<T>;
   }
 
-  async load(): Promise<T> {
-    if (this.isInitialized()) {
-      return this.entity;
+  async load(): Promise<T>;
+  async load<K extends keyof T>(prop: K): Promise<T[K]>;
+  async load<K extends keyof T = never>(prop?: K): Promise<T | T[K]> {
+    if (!this.isInitialized()) {
+      await wrap(this.entity, true).init();
     }
 
-    return wrap(this.entity, true).init();
-  }
+    if (prop) {
+      return this.entity[prop];
+    }
 
-  async get<K extends keyof T>(prop: K): Promise<T[K]> {
-    await this.load();
-    return this.entity[prop];
+    return this.entity;
   }
 
   set(entity: T | IdentifiedReference<T>): void {
@@ -53,6 +54,8 @@ export class Reference<T> {
     }
 
     this.entity = entity;
+    Object.defineProperty(this, '$', { value: entity, writable: true });
+    Object.defineProperty(this, 'get', { value: () => entity, writable: true });
   }
 
   unwrap(): T {
@@ -61,7 +64,7 @@ export class Reference<T> {
 
   getEntity(): T {
     if (!this.isInitialized()) {
-      throw new Error(`Reference<${wrap(this, true).__meta.name}> ${(wrap(this.entity, true).__primaryKey as Primary<T>)} not initialized`);
+      throw new Error(`Reference<${wrap(this, true).__meta.name}> ${(wrap(this.entity, true).__primaryKey as unknown as Primary<T>)} not initialized`);
     }
 
     return this.entity;

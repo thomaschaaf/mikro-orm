@@ -83,7 +83,7 @@ export class DatabaseTable {
     return schema.init().meta;
   }
 
-  private getPropertyDeclaration(column: Column, namingStrategy: NamingStrategy, schemaHelper: SchemaHelper, compositeFkIndexes: Dictionary<{ keyName: string }>, schema: EntitySchema) {
+  private getPropertyDeclaration<T>(column: Column, namingStrategy: NamingStrategy, schemaHelper: SchemaHelper, compositeFkIndexes: Dictionary<{ keyName: string }>, schema: EntitySchema<T>) {
     const reference = this.getReferenceType(column);
     const prop = this.getPropertyName(column);
     const type = this.getPropertyType(namingStrategy, schemaHelper, column);
@@ -98,7 +98,7 @@ export class DatabaseTable {
       fkOptions.onDelete = column.fk.deleteRule.toLowerCase();
     }
 
-    schema.addProperty(prop, type, {
+    schema.addProperty(prop as keyof T & string, type, {
       reference,
       columnType: column.type,
       default: this.getPropertyDefaultValue(schemaHelper, column, type),

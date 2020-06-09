@@ -1,4 +1,4 @@
-import { Collection, Entity, OneToMany, OneToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, Entity, OneToMany, OneToOne, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { Book2 } from './Book2';
 import { Configuration2 } from './Configuration2';
 
@@ -19,6 +19,8 @@ export class Test2 {
 
   @Property({ version: true })
   version!: number;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(props: Partial<Test2> = {}) {
     this.id = props.id!;

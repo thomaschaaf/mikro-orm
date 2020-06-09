@@ -31,10 +31,10 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
 
   async find<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, options: FindOptions<T> = {}, ctx?: Transaction<KnexTransaction>): Promise<T[]> {
     options = { populate: [], orderBy: {}, ...options };
-    const meta = this.metadata.get(entityName);
+    const meta = this.metadata.get<T>(entityName);
     const populate = this.autoJoinOneToOneOwner(meta, options.populate as unknown as PopulateOptions<T>[]);
     const joinedProps = this.joinedProps(meta, populate);
-    const qb = this.createQueryBuilder(entityName, ctx, !!ctx);
+    const qb = this.createQueryBuilder<T>(entityName, ctx, !!ctx);
     const fields = this.buildFields(meta, populate, joinedProps, qb, options.fields);
     const pk = meta.primaryKeys[0];
 
@@ -44,7 +44,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
 
     qb.select(fields)
       .populate(populate)
-      .where(where as Dictionary)
+      .where(where)
       .orderBy(options.orderBy!)
       .groupBy(options.groupBy!)
       .having(options.having!)
@@ -142,7 +142,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
       }
 
       const populateChildren = p.children || [];
-      this.mapJoinedProps(relationPojo, meta2, populateChildren, qb, root, map, path);
+      this.mapJoinedProps<T>(relationPojo, meta2, populateChildren as any[], qb, root, map, path);
     });
   }
 
@@ -255,9 +255,9 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
     const cond = { [`${prop.pivotTable}.${pivotProp2.name}`]: { $in: ownerMeta.compositePK ? owners : owners.map(o => o[0]) } };
 
     if (!Utils.isEmpty(where) && Object.keys(where as Dictionary).every(k => Utils.isOperator(k, false))) {
-      where = cond;
+      where = cond as FilterQuery<T>;
     } else {
-      where = { ...(where as Dictionary), ...cond };
+      where = { ...where, ...cond };
     }
 
     orderBy = this.getPivotOrderBy(prop, orderBy);
@@ -269,7 +269,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
     const items = owners.length ? await this.rethrow(qb.execute('all')) : [];
 
     const map: Dictionary<T[]> = {};
-    owners.forEach(owner => map['' + Utils.getPrimaryKeyHash(owner as string[])] = []);
+    owners.forEach(owner => map['' + Utils.getPrimaryKeyHash(owner as unknown as string[])] = []);
     items.forEach((item: any) => {
       const key = Utils.getPrimaryKeyHash(prop.joinColumns.map(col => item[col]));
       map[key].push(item);
@@ -287,13 +287,13 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
   /**
    * 1:1 owner side needs to be marked for population so QB auto-joins the owner id
    */
-  protected autoJoinOneToOneOwner<T>(meta: EntityMetadata, populate: PopulateOptions<T>[]): PopulateOptions<T>[] {
+  protected autoJoinOneToOneOwner<T>(meta: EntityMetadata<T>, populate: PopulateOptions<T>[]): PopulateOptions<T>[] {
     if (!this.config.get('autoJoinOneToOneOwner')) {
       return populate;
     }
 
     const relationsToPopulate = populate.map(({ field }) => field);
-    const toPopulate: PopulateOptions<T>[] = Object.values(meta.properties)
+    const toPopulate: PopulateOptions<T>[] = Object.values<EntityProperty<T>>(meta.properties)
       .filter(prop => prop.reference === ReferenceType.ONE_TO_ONE && !prop.owner && !relationsToPopulate.includes(prop.name))
       .map(prop => ({ field: prop.name, strategy: prop.strategy }));
 
@@ -320,12 +320,12 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
     return Object.values(res).map((rows: Dictionary[]) => rows[0]) as T[];
   }
 
-  protected getFieldsForJoinedLoad<T>(qb: QueryBuilder, meta: EntityMetadata, populate: PopulateOptions<T>[] = [], parentTableAlias?: string, parentJoinPath?: string): Field[] {
+  protected getFieldsForJoinedLoad<T>(qb: QueryBuilder<T>, meta: EntityMetadata<T>, populate: PopulateOptions<T>[] = [], parentTableAlias?: string, parentJoinPath?: string): Field[] {
     const fields: Field[] = [];
     const joinedProps = this.joinedProps(meta, populate);
 
     // alias all fields in the primary table
-    Object.values(meta.properties)
+    Object.values<EntityProperty<T>>(meta.properties)
       .filter(prop => this.shouldHaveColumn(prop, populate))
       .forEach(prop => fields.push(...this.mapPropToFieldNames(qb, prop, parentTableAlias)));
 
@@ -336,7 +336,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
       const field = parentTableAlias ? `${parentTableAlias}.${prop.name}` : prop.name;
       const path = parentJoinPath ? `${parentJoinPath}.${prop.name}` : `${meta.name}.${prop.name}`;
       qb.join(field, tableAlias, {}, 'leftJoin', path);
-      fields.push(...this.getFieldsForJoinedLoad(qb, meta2, relation.children, tableAlias, path));
+      fields.push(...this.getFieldsForJoinedLoad<T>(qb, meta2, relation.children as any[], tableAlias, path));
     });
 
     return fields;
@@ -405,10 +405,10 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
       const knex = qb1.getKnex();
 
       if (Array.isArray(deleteDiff)) {
-        knex.whereIn(prop.inverseJoinColumns, deleteDiff as Value[][]);
+        knex.whereIn(prop.inverseJoinColumns, deleteDiff as unknown as Value[][]);
       }
 
-      meta2.primaryKeys.forEach((pk, idx) => knex.andWhere(prop.joinColumns[idx], pks[idx] as Value[][]));
+      meta2.primaryKeys.forEach((pk, idx) => knex.andWhere(prop.joinColumns[idx], pks[idx] as unknown as Value[][]));
       await this.execute(knex.delete());
     }
 
@@ -436,7 +436,7 @@ export abstract class AbstractSqlDriver<C extends AbstractSqlConnection = Abstra
     await this.rethrow(qb.execute());
   }
 
-  protected buildFields<T>(meta: EntityMetadata<T>, populate: PopulateOptions<T>[], joinedProps: PopulateOptions<T>[], qb: QueryBuilder, fields?: Field[]): Field[] {
+  protected buildFields<T>(meta: EntityMetadata<T>, populate: PopulateOptions<T>[], joinedProps: PopulateOptions<T>[], qb: QueryBuilder<T>, fields?: Field[]): Field[] {
     const lazyProps = Object.values<EntityProperty<T>>(meta.properties).filter(prop => prop.lazy && !populate.some(p => p.field === prop.name || p.all));
     const hasExplicitFields = !!fields;
 

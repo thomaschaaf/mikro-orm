@@ -11,12 +11,12 @@ export class MongoEntityManager<D extends MongoDriver = MongoDriver> extends Ent
   /**
    * Shortcut to driver's aggregate method. Available in MongoDriver only.
    */
-  async aggregate(entityName: EntityName<AnyEntity>, pipeline: any[]): Promise<any[]> {
+  async aggregate<T>(entityName: EntityName<T>, pipeline: any[]): Promise<any[]> {
     entityName = Utils.className(entityName);
     return this.getDriver().aggregate(entityName, pipeline);
   }
 
-  getCollection(entityName: EntityName<AnyEntity>): Collection {
+  getCollection<T>(entityName: EntityName<T>): Collection {
     return this.getConnection().getCollection(entityName);
   }
 

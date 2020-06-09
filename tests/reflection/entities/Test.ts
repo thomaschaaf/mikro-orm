@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 
 @Entity()
 export class Test {
@@ -15,5 +15,7 @@ export class Test {
 
   @Property({ hidden: true })
   hiddenField? = Date.now();
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
 }

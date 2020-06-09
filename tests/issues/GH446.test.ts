@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { Entity, MikroORM, OneToOne, PrimaryKey, PrimaryKeyType, wrap } from '@mikro-orm/core';
+import { Entity, MikroORM, OneToOne, PrimaryKey, PrimaryKeyProp, wrap } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 import { SchemaGenerator } from '@mikro-orm/knex';
 
@@ -9,6 +9,8 @@ class A {
   @PrimaryKey({ columnType: 'uuid' })
   id: string = v4();
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -16,6 +18,8 @@ class B {
 
   @OneToOne({ primary: true })
   a!: A;
+
+  [PrimaryKeyProp]: 'a';
 
 }
 
@@ -25,7 +29,7 @@ class C {
   @OneToOne({ primary: true })
   b!: B;
 
-  [PrimaryKeyType]: B | string;
+  [PrimaryKeyProp]: 'b';
 
 }
 

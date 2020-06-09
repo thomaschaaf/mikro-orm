@@ -45,7 +45,7 @@ describe('EntityManagerPostgre', () => {
   test('should return postgre driver', async () => {
     const driver = orm.em.getDriver();
     expect(driver).toBeInstanceOf(PostgreSqlDriver);
-    await expect(driver.findOne(Book2.name, { double: 123 })).resolves.toBeNull();
+    await expect(driver.findOne<Book2>(Book2.name, { double: 123 })).resolves.toBeNull();
     const author = await driver.nativeInsert(Author2.name, { name: 'author', email: 'email' });
     const tag = await driver.nativeInsert(BookTag2.name, { name: 'tag name' });
     await expect(driver.nativeInsert(Book2.name, { uuid: v4(), author: author.insertId, tags: [tag.insertId] })).resolves.not.toBeNull();
@@ -74,7 +74,7 @@ describe('EntityManagerPostgre', () => {
     });
     expect(driver.getPlatform().denormalizePrimaryKey(1)).toBe(1);
     expect(driver.getPlatform().denormalizePrimaryKey('1')).toBe('1');
-    await expect(driver.find(BookTag2.name, { books: { $in: [1] } })).resolves.not.toBeNull();
+    await expect(driver.find<BookTag2>(BookTag2.name, { books: { $in: ['1'] } })).resolves.not.toBeNull();
   });
 
   test('driver appends errored query', async () => {
@@ -734,7 +734,7 @@ describe('EntityManagerPostgre', () => {
 
     // test M:N lazy load
     orm.em.clear();
-    let book = (await orm.em.findOne(Book2, { tags: tag1.id }))!;
+    const book = (await orm.em.findOne(Book2, { tags: tag1.id }))!;
     expect(book.tags.isInitialized()).toBe(false);
     await book.tags.init();
     expect(book.tags.isInitialized()).toBe(true);
@@ -749,30 +749,30 @@ describe('EntityManagerPostgre', () => {
     book.tags.remove(tag1);
     await orm.em.persistAndFlush(book);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(1);
+    const b4 = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
+    expect(b4.tags.count()).toBe(1);
 
     // add
-    book.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
-    book.tags.add(new BookTag2('fresh'));
-    await orm.em.persistAndFlush(book);
+    b4.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
+    b4.tags.add(new BookTag2('fresh'));
+    await orm.em.persistAndFlush(b4);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(3);
+    const b5 = (await orm.em.findOne(Book2, b4.uuid, { populate: ['tags'] }))!;
+    expect(b5.tags.count()).toBe(3);
 
     // contains
-    expect(book.tags.contains(tag1)).toBe(true);
-    expect(book.tags.contains(tag2)).toBe(false);
-    expect(book.tags.contains(tag3)).toBe(true);
-    expect(book.tags.contains(tag4)).toBe(false);
-    expect(book.tags.contains(tag5)).toBe(false);
+    expect(b5.tags.contains(tag1)).toBe(true);
+    expect(b5.tags.contains(tag2)).toBe(false);
+    expect(b5.tags.contains(tag3)).toBe(true);
+    expect(b5.tags.contains(tag4)).toBe(false);
+    expect(b5.tags.contains(tag5)).toBe(false);
 
     // removeAll
-    book.tags.removeAll();
-    await orm.em.persistAndFlush(book);
+    b5.tags.removeAll();
+    await orm.em.persistAndFlush(b5);
     orm.em.clear();
-    book = (await orm.em.findOne(Book2, book.uuid, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(0);
+    const b6 = (await orm.em.findOne(Book2, b5.uuid, { populate: ['tags'] }))!;
+    expect(b6.tags.count()).toBe(0);
   });
 
   test('bigint support', async () => {

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, ManyToOne, OneToOne, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, ManyToOne, OneToOne, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 import FooBar from './FooBar';
 import { Book } from './Book';
 
@@ -20,5 +20,7 @@ export class FooBaz {
 
   @ManyToOne(() => Book, { eager: true })
   book!: Book;
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
 }

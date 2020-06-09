@@ -1,4 +1,4 @@
-import { EntityData, AnyEntity, FilterQuery, Dictionary, Primary } from '../typings';
+import { EntityData, AnyEntity, FilterQuery, Dictionary, Primary, EntityName, Populate } from '../typings';
 import { ArrayCollection } from './index';
 import { ReferenceType } from './enums';
 import { Utils, ValidationError } from '../utils';
@@ -16,6 +16,8 @@ export class Collection<T extends AnyEntity<T>, O extends AnyEntity<O> = AnyEnti
   constructor(owner: O, items?: T[], initialized = true) {
     super(owner, items);
     this.initialized = !!items || initialized;
+    Object.defineProperty(this, '$', { value: this.items });
+    Object.defineProperty(this, 'get', { value: () => this.items });
     Object.defineProperty(this, 'snapshot', { enumerable: false });
     Object.defineProperty(this, '_populated', { enumerable: false });
   }
@@ -150,7 +152,7 @@ export class Collection<T extends AnyEntity<T>, O extends AnyEntity<O> = AnyEnti
     const order = [...this.items]; // copy order of references
     const customOrder = !!options.orderBy;
     options.orderBy = this.createOrderBy(options.orderBy);
-    const items = await em.find<T>(this.property.type, where, options);
+    const items = await em.find(this.property.type as EntityName<T>, where, options);
 
     if (!customOrder) {
       this.reorderItems(items, order);
@@ -267,7 +269,7 @@ export class Collection<T extends AnyEntity<T>, O extends AnyEntity<O> = AnyEnti
 }
 
 export interface InitOptions<T> {
-  populate?: string[];
+  populate?: Populate<T>;
   orderBy?: QueryOrderMap;
   where?: FilterQuery<T>;
 }

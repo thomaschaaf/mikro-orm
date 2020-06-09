@@ -1,4 +1,4 @@
-import { BigIntType, Collection, Entity, ManyToMany, PrimaryKey, Property, ReferenceType, wrap } from '@mikro-orm/core';
+import { BigIntType, Collection, Entity, ManyToMany, PrimaryKey, PrimaryKeyProp, Property, ReferenceType, wrap } from '@mikro-orm/core';
 import { Book2 } from './Book2';
 
 @Entity()
@@ -15,6 +15,8 @@ export class BookTag2 {
 
   @ManyToMany(() => Book2, book => book.tagsUnordered)
   booksUnordered!: Collection<Book2>;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(name: string) {
     const props = wrap(this, true).__meta.properties;

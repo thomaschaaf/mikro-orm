@@ -1,8 +1,10 @@
-import { AnyEntity, Collection, ReferenceType, wrap } from '@mikro-orm/core';
+import { AnyEntity, Collection, PrimaryKeyProp, ReferenceType, wrap } from '@mikro-orm/core';
 
 export abstract class BaseEntity22 {
 
   abstract id: number;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor() {
     const props = wrap(this, true).__meta.properties;

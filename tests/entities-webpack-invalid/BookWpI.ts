@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { AuthorWpI } from './index';
 
 @Entity()
@@ -12,5 +12,7 @@ export class BookWpI {
 
   @ManyToOne({ entity: () => AuthorWpI, inversedBy: a => a.books })
   author!: AuthorWpI;
+
+  [PrimaryKeyProp]: 'id';
 
 }

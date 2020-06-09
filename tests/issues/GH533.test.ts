@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, MikroORM, wrap, ManyToOne } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, wrap, ManyToOne, PrimaryKeyProp } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 @Entity()
@@ -10,6 +10,8 @@ class A {
   @Property({ nullable: true })
   foo?: string;
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -20,6 +22,8 @@ class B {
 
   @Property({ nullable: true })
   foo?: string;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -34,6 +38,8 @@ class C {
 
   @ManyToOne()
   b: B;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(a: A, b: B) {
     this.a = a;

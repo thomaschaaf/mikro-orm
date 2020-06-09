@@ -42,7 +42,7 @@ export class Author extends BaseEntity<Author> {
   books = new Collection<Book>(this);
 
   @ManyToMany(() => Author)
-  friends: Collection<Author> = new Collection<Author>(this);
+  friends: Collection<Author, Author> = new Collection<Author, Author>(this);
 
   @ManyToOne(() => Book)
   favouriteBook!: Book;

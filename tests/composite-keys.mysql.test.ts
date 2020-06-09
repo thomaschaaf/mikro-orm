@@ -1,4 +1,4 @@
-import { LoadStrategy, Logger, MikroORM, wrap } from '@mikro-orm/core';
+import { FilterQuery, LoadStrategy, Logger, MikroORM, Primary, wrap } from '@mikro-orm/core';
 import { AbstractSqlConnection, MySqlDriver } from '@mikro-orm/mysql';
 import { Author2, Configuration2, FooBar2, FooBaz2, FooParam2, Test2, Address2, Car2, CarOwner2, User2, Sandwich } from './entities-sql';
 import { initORMMySql, wipeDatabaseMySql } from './bootstrap';
@@ -95,7 +95,7 @@ describe('composite keys in mysql', () => {
     await orm.em.persistAndFlush(owner);
     orm.em.clear();
 
-    const o1 = await orm.em.findOneOrFail(CarOwner2, owner.id, { populate: ['car'] });
+    const o1 = await orm.em.findOneOrFail(CarOwner2, owner.id, { populate: { car: LoadStrategy.JOINED } });
     expect(o1.car.price).toBe(200_000);
     expect(wrap(o1).toJSON()).toEqual({
       id: 1,

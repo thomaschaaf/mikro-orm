@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { BeforeDelete, BeforeUpdate, Entity, MikroORM, PrimaryKey, Property, ReflectMetadataProvider, wrap } from '@mikro-orm/core';
+import { BeforeDelete, BeforeUpdate, Entity, MikroORM, PrimaryKey, PrimaryKeyProp, Property, ReflectMetadataProvider, wrap } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { BASE_DIR } from '../bootstrap';
 
@@ -11,6 +11,8 @@ export class A {
 
   @Property({ nullable: true })
   name?: string;
+
+  [PrimaryKeyProp]: 'id';
 
   @BeforeUpdate()
   async beforeUpdate() {

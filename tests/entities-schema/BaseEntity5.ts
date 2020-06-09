@@ -1,9 +1,10 @@
-import { EntitySchema } from '@mikro-orm/core';
+import { EntitySchema, PrimaryKeyProp } from '@mikro-orm/core';
 
 export interface BaseEntity5 {
   id: number;
   createdAt: Date;
   updatedAt: Date;
+  [PrimaryKeyProp]: 'id';
 }
 
 export const schema = new EntitySchema<BaseEntity5>({

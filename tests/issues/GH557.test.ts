@@ -1,6 +1,6 @@
 import { unlinkSync } from 'fs';
 import { BASE_DIR } from '../bootstrap';
-import { MikroORM, ReflectMetadataProvider, Entity, ManyToOne, OneToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { MikroORM, ReflectMetadataProvider, Entity, ManyToOne, OneToOne, PrimaryKey, Property, PrimaryKeyProp } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 
 @Entity()
@@ -17,6 +17,8 @@ export class Rate {
 
   @OneToOne('Application', 'rate3')
   application3?: any;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(name: string) {
     this.name = name;
@@ -41,6 +43,8 @@ export class Application {
 
   @ManyToOne({ joinColumn: 'application_rate4_id' })
   rate4!: Rate;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

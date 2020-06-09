@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, PrimaryKey, Property, MikroORM, Dictionary } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, Dictionary, PrimaryKeyProp } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 
 @Entity()
@@ -13,6 +13,8 @@ class Entity401 {
 
   @Property()
   bar?: string;
+
+  [PrimaryKeyProp]: '_id';
 
   constructor(data = {}) {
     this.data = data;

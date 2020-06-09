@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { Cascade, Collection, Entity, Formula, IdentifiedReference, ManyToMany, ManyToOne, OneToOne, PrimaryKey, Property, QueryOrder } from '@mikro-orm/core';
+import { Cascade, Collection, Entity, Formula, IdentifiedReference, ManyToMany, ManyToOne, OneToOne, PrimaryKey, PrimaryKeyProp, Property, QueryOrder } from '@mikro-orm/core';
 import { Publisher2 } from './Publisher2';
 import { Author2 } from './Author2';
 import { BookTag2 } from './BookTag2';
@@ -46,6 +46,8 @@ export class Book2 {
 
   @ManyToMany(() => BookTag2, undefined, { pivotTable: 'book_to_tag_unordered', orderBy: { name: QueryOrder.ASC } })
   tagsUnordered = new Collection<BookTag2>(this);
+
+  [PrimaryKeyProp]: 'uuid';
 
   constructor(title: string, author: Author2, price?: number) {
     this.title = title;

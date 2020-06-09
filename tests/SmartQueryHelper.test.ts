@@ -75,11 +75,11 @@ describe('SmartQueryHelper', () => {
     expect(SmartQueryHelper.processParams({ test })).toEqual({ test: test.id });
     expect(SmartQueryHelper.processParams(test)).toEqual({ id: test.id });
     const author = new Author2('name', 'mail');
-    let book = new Book2('test', author);
+    const book = new Book2('test', author);
     expect(SmartQueryHelper.processParams(book)).toEqual({ uuid: book.uuid });
-    book = Reference.create(book);
-    expect(SmartQueryHelper.processParams(book)).toEqual({ uuid: book.uuid });
-    expect(SmartQueryHelper.processParams({ book })).toEqual({ book: book.uuid });
+    const ref = Reference.create(book);
+    expect(SmartQueryHelper.processParams(ref)).toEqual({ uuid: ref.uuid });
+    expect(SmartQueryHelper.processParams({ ref })).toEqual({ ref: ref.uuid });
     const field = undefined;
     expect(SmartQueryHelper.processParams({ field })).toEqual({ field: null });
   });

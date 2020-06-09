@@ -44,7 +44,7 @@ export class MongoDriver extends DatabaseDriver<MongoConnection> {
 
   async count<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, ctx?: Transaction<ClientSession>): Promise<number> {
     where = this.renameFields(entityName, where);
-    return this.rethrow(this.getConnection('read').countDocuments(entityName, where, ctx));
+    return this.rethrow(this.getConnection('read').countDocuments(entityName, where as Dictionary, ctx));
   }
 
   async nativeInsert<T extends AnyEntity<T>>(entityName: string, data: EntityData<T>, ctx?: Transaction<ClientSession>): Promise<QueryResult> {
@@ -60,7 +60,7 @@ export class MongoDriver extends DatabaseDriver<MongoConnection> {
     where = this.renameFields(entityName, where);
     data = this.renameFields(entityName, data);
 
-    return this.rethrow(this.getConnection('write').updateMany(entityName, where as FilterQuery<T>, data as { _id: any }, ctx));
+    return this.rethrow(this.getConnection('write').updateMany(entityName, where as Dictionary, data as { _id: any }, ctx));
   }
 
   async nativeDelete<T extends AnyEntity<T>>(entityName: string, where: FilterQuery<T>, ctx?: Transaction<ClientSession>): Promise<QueryResult> {
@@ -70,7 +70,7 @@ export class MongoDriver extends DatabaseDriver<MongoConnection> {
 
     where = this.renameFields(entityName, where);
 
-    return this.rethrow(this.getConnection('write').deleteMany(entityName, where, ctx));
+    return this.rethrow(this.getConnection('write').deleteMany(entityName, where as Dictionary, ctx));
   }
 
   async aggregate(entityName: string, pipeline: any[], ctx?: Transaction<ClientSession>): Promise<any[]> {

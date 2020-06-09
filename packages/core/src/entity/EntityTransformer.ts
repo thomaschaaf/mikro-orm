@@ -16,7 +16,7 @@ export class EntityTransformer {
     meta.primaryKeys
       .filter(pk => !Utils.isDefined(entity[pk], true) || !meta.properties[pk].hidden)
       .map(pk => [pk, Utils.getPrimaryKeyValue<T>(entity, [pk])] as [string, string])
-      .forEach(([pk, value]) => ret[platform.getSerializedPrimaryKeyField(pk) as keyof T] = platform.normalizePrimaryKey(value));
+      .forEach(([pk, value]) => ret[platform.getSerializedPrimaryKeyField(pk) as keyof T] = platform.normalizePrimaryKey(value) as unknown as T[keyof T]);
 
     if ((!wrapped.isInitialized() && Utils.isDefined(wrapped.__primaryKey, true)) || visited.includes(wrapped.__uuid)) {
       return ret;

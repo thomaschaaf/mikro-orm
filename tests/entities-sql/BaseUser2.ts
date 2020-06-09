@@ -1,4 +1,4 @@
-import { AfterCreate, AfterUpdate, Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { AfterCreate, AfterUpdate, Entity, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 
 @Entity({
   discriminatorColumn: 'type',
@@ -20,6 +20,8 @@ export abstract class BaseUser2 {
   lastName: string;
 
   baseState?: string;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(firstName: string, lastName: string) {
     this.firstName = firstName;

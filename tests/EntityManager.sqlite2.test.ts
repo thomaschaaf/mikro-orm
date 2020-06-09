@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Collection, EntityManager, LockMode, MikroORM, QueryOrder, Utils, Logger, ValidationError, wrap } from '@mikro-orm/core';
+import { Collection, EntityManager, LockMode, MikroORM, QueryOrder, Utils, Logger, ValidationError, wrap, EntityName } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 import { initORMSqlite2, wipeDatabaseSqlite2 } from './bootstrap';
 import { Author4, Book4, BookTag4, FooBar4, Publisher4, Test4 } from './entities-schema';
@@ -447,7 +447,7 @@ describe('EntityManagerSqlite2', () => {
     orm.em.clear();
 
     const newGod = orm.em.getReference<Author4>('Author4', god.id);
-    const publisher = (await orm.em.findOne<Publisher4>('Publisher4', pub.id, { populate: ['books'] }))!;
+    const publisher = (await orm.em.findOne<Publisher4, ['books']>('Publisher4', pub.id, { populate: ['books'] }))!;
     await wrap(newGod).init();
 
     const json = wrap(publisher).toJSON().books;
@@ -564,44 +564,44 @@ describe('EntityManagerSqlite2', () => {
 
     // test M:N lazy load
     orm.em.clear();
-    let book = (await orm.em.findOne<Book4>('Book4', { tags: tag1.id }))!;
-    expect(book.tags.isInitialized()).toBe(false);
-    await book.tags.init();
-    expect(book.tags.isInitialized()).toBe(true);
-    expect(book.tags.count()).toBe(2);
-    expect(book.tags.getItems()[0].constructor.name).toBe('BookTag4');
-    expect(book.tags.getItems()[0].id).toBeDefined();
-    expect(wrap(book.tags.getItems()[0]).isInitialized()).toBe(true);
+    const b1 = (await orm.em.findOne<Book4>('Book4', { tags: tag1.id }))!;
+    expect(b1.tags.isInitialized()).toBe(false);
+    await b1.tags.init();
+    expect(b1.tags.isInitialized()).toBe(true);
+    expect(b1.tags.count()).toBe(2);
+    expect(b1.tags.getItems()[0].constructor.name).toBe('BookTag4');
+    expect(b1.tags.getItems()[0].id).toBeDefined();
+    expect(wrap(b1.tags.getItems()[0]).isInitialized()).toBe(true);
 
     // test collection CRUD
     // remove
-    expect(book.tags.count()).toBe(2);
-    book.tags.remove(tag1);
-    await orm.em.persist(book, true);
+    expect(b1.tags.count()).toBe(2);
+    b1.tags.remove(tag1);
+    await orm.em.persist(b1, true);
     orm.em.clear();
-    book = (await orm.em.findOne<Book4>('Book4', book.id, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(1);
+    const b2 = (await orm.em.findOne('Book4' as EntityName<Book4>, b1.id, { populate: ['tags'] }))!;
+    expect(b2.tags.count()).toBe(1);
 
     // add
-    book.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
-    await orm.em.persist(book, true);
+    b2.tags.add(tagRepository.getReference(tag1.id)); // we need to get reference as tag1 is detached from current EM
+    await orm.em.persist(b2, true);
     orm.em.clear();
-    book = (await orm.em.findOne<Book4>('Book4', book.id, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(2);
+    const b3 = (await orm.em.findOne('Book4' as EntityName<Book4>, b2.id, { populate: ['tags'] }))!;
+    expect(b3.tags.count()).toBe(2);
 
     // contains
-    expect(book.tags.contains(tag1)).toBe(true);
-    expect(book.tags.contains(tag2)).toBe(false);
-    expect(book.tags.contains(tag3)).toBe(true);
-    expect(book.tags.contains(tag4)).toBe(false);
-    expect(book.tags.contains(tag5)).toBe(false);
+    expect(b3.tags.contains(tag1)).toBe(true);
+    expect(b3.tags.contains(tag2)).toBe(false);
+    expect(b3.tags.contains(tag3)).toBe(true);
+    expect(b3.tags.contains(tag4)).toBe(false);
+    expect(b3.tags.contains(tag5)).toBe(false);
 
     // removeAll
-    book.tags.removeAll();
-    await orm.em.persist(book, true);
+    b3.tags.removeAll();
+    await orm.em.persist(b3, true);
     orm.em.clear();
-    book = (await orm.em.findOne<Book4>('Book4', book.id, { populate: ['tags'] }))!;
-    expect(book.tags.count()).toBe(0);
+    const b4 = (await orm.em.findOne('Book4' as EntityName<Book4>, b3.id, { populate: ['tags'] }))!;
+    expect(b4.tags.count()).toBe(0);
   });
 
   test('populating many to many relation', async () => {

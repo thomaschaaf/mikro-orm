@@ -1,10 +1,13 @@
 import { v4 as uuid } from 'uuid';
 
 import { Configuration, RequestContext, SmartQueryHelper, Utils, ValidationError } from './utils';
-import { EntityAssigner, EntityFactory, EntityLoader, EntityRepository, EntityValidator, IdentifiedReference, LoadStrategy, Reference, ReferenceType, wrap } from './entity';
+import { EntityAssigner, EntityFactory, EntityLoader, EntityRepository, EntityValidator, LoadStrategy, Reference, ReferenceType, wrap } from './entity';
 import { LockMode, UnitOfWork } from './unit-of-work';
-import { EntityManagerType, FindOneOptions, FindOptions, IDatabaseDriver, Populate, PopulateMap, PopulateOptions } from './drivers';
-import { AnyEntity, Constructor, Dictionary, EntityData, EntityMetadata, EntityName, FilterQuery, IPrimaryKey, Primary } from './typings';
+import { EntityManagerType, FindOneOptions, FindOptions, IDatabaseDriver } from './drivers';
+import {
+  AnyEntity, Constructor, Dictionary, EntityData, EntityMetadata, EntityName, FilterQuery, IdentifiedReference, IPrimaryKey, Loaded, Primary,
+  Populate, PopulateMap, PopulateOptions,
+} from './typings';
 import { QueryOrderMap } from './enums';
 import { MetadataStorage } from './metadata';
 import { Transaction } from './connections';
@@ -67,12 +70,12 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   /**
    * Finds all entities matching your `where` query. You can pass additional options via the `options` parameter.
    */
-  async find<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T> = {}): Promise<T[]> {
+  async find<T, P extends Populate<T> = []>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T, P> = {}): Promise<Loaded<T, P>[]> {
     entityName = Utils.className(entityName);
     where = SmartQueryHelper.processWhere(where, entityName, this.metadata);
     this.validator.validateParams(where);
     options.orderBy = options.orderBy || {};
-    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy) as unknown as true;
+    options.populate = this.preparePopulate<T, P>(entityName, options.populate, options.strategy) as unknown as P;
     const results = await this.driver.find<T>(entityName, where, options, this.transactionContext);
 
     if (results.length === 0) {
@@ -89,14 +92,14 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     const unique = Utils.unique(ret);
     await this.entityLoader.populate<T>(entityName, unique, options.populate as unknown as PopulateOptions<T>[], where, options.orderBy, options.refresh);
 
-    return unique;
+    return unique as Loaded<T, P>[];
   }
 
   /**
    * Calls `em.find()` and `em.count()` with the same arguments (where applicable) and returns the results as tuple
    * where first element is the array of entities and the second is the count.
    */
-  async findAndCount<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T> = {}): Promise<[T[], number]> {
+  async findAndCount<T, P extends Populate<T> = []>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOptions<T, P> = {}): Promise<[Loaded<T, P>[], number]> {
     const [entities, count] = await Promise.all([
       this.find(entityName, where, options),
       this.count(entityName, where),
@@ -108,7 +111,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   /**
    * Finds first entity matching your `where` query.
    */
-  async findOne<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOptions<T> = {}): Promise<T | null> {
+  async findOne<T, P extends Populate<T> = []>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOptions<T, P> = {}): Promise<Loaded<T, P> | null> {
     entityName = Utils.className(entityName);
     const meta = this.metadata.get<T>(entityName);
     this.validator.validateEmptyWhere(where);
@@ -122,7 +125,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
 
     this.validator.validateParams(where);
-    options.populate = this.preparePopulate<T>(entityName, options.populate, options.strategy) as unknown as true;
+    options.populate = this.preparePopulate<T, P>(entityName, options.populate as P, options.strategy) as unknown as P;
     const data = await this.driver.findOne(entityName, where, options, this.transactionContext);
 
     if (!data) {
@@ -132,7 +135,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     entity = this.merge(entityName, data as EntityData<T>, options.refresh) as T;
     await this.lockAndPopulate(entityName, entity, where, options);
 
-    return entity;
+    return entity as Loaded<T, P>;
   }
 
   /**
@@ -140,7 +143,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
    * You can override the factory for creating this method via `options.failHandler` locally
    * or via `Configuration.findOneOrFailHandler` globally.
    */
-  async findOneOrFail<T>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOrFailOptions<T> = {}): Promise<T> {
+  async findOneOrFail<T, P extends Populate<T> = []>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOrFailOptions<T, P> = {}): Promise<Loaded<T, P>> {
     const entity = await this.findOne(entityName, where, options);
 
     if (!entity) {
@@ -149,7 +152,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
       throw failHandler(entityName, where as Dictionary);
     }
 
-    return entity;
+    return entity as Loaded<T, P>;
   }
 
   /**
@@ -182,7 +185,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     this.validator.validateParams(data, 'insert data');
     const res = await this.driver.nativeInsert(entityName, data, this.transactionContext);
 
-    return res.insertId as Primary<T>;
+    return res.insertId as unknown as Primary<T>;
   }
 
   /**
@@ -271,7 +274,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   /**
    * Gets a reference to the entity identified by the given type and identifier without actually loading it, if the entity is not yet loaded
    */
-  getReference<T, PK extends keyof T>(entityName: EntityName<T>, id: Primary<T> | Primary<T>[], wrapped: true): IdentifiedReference<T, PK>;
+  getReference<T>(entityName: EntityName<T>, id: Primary<T> | Primary<T>[], wrapped: true): IdentifiedReference<T>;
 
   /**
    * Gets a reference to the entity identified by the given type and identifier without actually loading it, if the entity is not yet loaded
@@ -299,7 +302,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
         throw ValidationError.invalidCompositeIdentifier(meta);
       }
 
-      id = [id];
+      id = [id] as Primary<T>[];
     }
 
     const entity = this.getEntityFactory().createReference<T>(entityName, id);
@@ -447,22 +450,23 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     return ret;
   }
 
-  async populate<T>(entities: T, populate: string | Populate<T>, where?: FilterQuery<T>, orderBy?: QueryOrderMap, refresh?: boolean, validate?: boolean): Promise<T>;
-  async populate<T>(entities: T[], populate: string | Populate<T>, where?: FilterQuery<T>, orderBy?: QueryOrderMap, refresh?: boolean, validate?: boolean): Promise<T[]>;
-  async populate<T>(entities: T | T[], populate: string | Populate<T>, where: FilterQuery<T> = {}, orderBy: QueryOrderMap = {}, refresh = false, validate = true): Promise<T | T[]> {
-    const entitiesArray = Utils.asArray(entities);
-
-    if (entitiesArray.length === 0) {
-      return entities;
+  async populate<T, P extends Populate<T> = []>(entities: T[], populate: P, where: FilterQuery<T> = {}, orderBy: QueryOrderMap = {}, refresh = false, validate = true): Promise<Loaded<T, P>[]> {
+    if (entities.length === 0) {
+      return entities as Loaded<T, P>[];
     }
 
-    populate = Utils.isString(populate) ? Utils.asArray(populate) : populate;
+    populate = Utils.isString(populate) ? Utils.asArray(populate) as unknown as P : populate;
 
-    const entityName = (entitiesArray[0] as unknown as Constructor<any>).constructor.name;
-    const preparedPopulate = this.preparePopulate<T>(entityName, populate);
-    await this.entityLoader.populate(entityName, entitiesArray, preparedPopulate, where, orderBy, refresh, validate);
+    const entityName = (entities[0] as unknown as Constructor<any>).constructor.name;
+    const preparedPopulate = this.preparePopulate<T, P>(entityName, populate);
+    await this.entityLoader.populate(entityName, entities, preparedPopulate, where, orderBy, refresh, validate);
 
-    return entities;
+    return entities as Loaded<T, P>[];
+  }
+
+  async populateOne<T, P extends Populate<T> = []>(entity: T, populate: P, where: FilterQuery<T> = {}, orderBy: QueryOrderMap = {}, refresh = false, validate = true): Promise<Loaded<T, P>> {
+    const ret = await this.populate([entity], populate, where, orderBy, refresh, validate);
+    return ret[0];
   }
 
   /**
@@ -532,18 +536,18 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
   }
 
-  private async lockAndPopulate<T>(entityName: string, entity: T, where: FilterQuery<T>, options: FindOneOptions<T>): Promise<T> {
+  private async lockAndPopulate<T, P extends Populate<T> = []>(entityName: string, entity: T, where: FilterQuery<T>, options: FindOneOptions<T, P>): Promise<Loaded<T, P>> {
     if (options.lockMode === LockMode.OPTIMISTIC) {
       await this.lock(entity, options.lockMode, options.lockVersion);
     }
 
     const preparedPopulate = this.preparePopulate(entityName, options.populate, options.strategy);
-    await this.entityLoader.populate(entityName, [entity], preparedPopulate, where, options.orderBy || {}, options.refresh);
+    await this.entityLoader.populate<T>(entityName, [entity], preparedPopulate, where, options.orderBy || {}, options.refresh);
 
-    return entity;
+    return entity as Loaded<T, P>;
   }
 
-  private preparePopulate<T>(entityName: string, populate?: Populate<T>, strategy?: LoadStrategy): PopulateOptions<T>[] {
+  private preparePopulate<T, P extends Populate<T> = []>(entityName: string, populate?: P, strategy?: LoadStrategy): PopulateOptions<T>[] {
     if (!populate) {
       return [];
     }
@@ -561,7 +565,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
         }
 
         return field;
-      }) as unknown as string[];
+      }) as unknown as P;
     }
 
     const ret: PopulateOptions<T>[] = this.entityLoader.normalizePopulate<T>(entityName, populate as true);
@@ -573,22 +577,23 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
   }
 
   private preparePopulateObject<T>(meta: EntityMetadata<T>, populate: PopulateMap<T>, strategy?: LoadStrategy): PopulateOptions<T>[] {
-    return Object.keys(populate).map(field => {
-      const prop = meta.properties[field];
-      const fieldStrategy = strategy ?? (Utils.isString(populate[field]) ? populate[field] : prop.strategy);
+    return Object.keys(populate).map(f => {
+      const prop = meta.properties[f as keyof T & string];
+      const field = prop.name;
+      const fieldStrategy = strategy ?? (Utils.isString(populate[f]) ? populate[f] : prop.strategy);
 
-      if (populate[field] === true) {
+      if (populate[f] === true) {
         return { field, strategy: fieldStrategy };
       }
 
-      if (Array.isArray(populate[field])) {
+      if (Array.isArray(populate[f])) {
         const meta2 = this.metadata.get(prop!.type);
-        return { field, strategy: populate[field][0], children: this.preparePopulateObject(meta2, populate[field][1], strategy) };
+        return { field, strategy: populate[f][0], children: this.preparePopulateObject(meta2, populate[f][1], strategy) };
       }
 
-      if (Utils.isPlainObject(populate[field])) {
+      if (Utils.isPlainObject(populate[f])) {
         const meta2 = this.metadata.get(prop!.type);
-        return { field, strategy: fieldStrategy, children: this.preparePopulateObject(meta2, populate[field], strategy) };
+        return { field, strategy: fieldStrategy, children: this.preparePopulateObject(meta2, populate[f], strategy) };
       }
 
       return { field, strategy: fieldStrategy };
@@ -597,6 +602,6 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
 
 }
 
-export interface FindOneOrFailOptions<T> extends FindOneOptions<T> {
+export interface FindOneOrFailOptions<T, P extends Populate<T>> extends FindOneOptions<T, P> {
   failHandler?: (entityName: string, where: Dictionary | IPrimaryKey | any) => Error;
 }

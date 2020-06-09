@@ -1,6 +1,6 @@
 import { unlinkSync } from 'fs';
 import { v4 } from 'uuid';
-import { Collection, Entity, ManyToMany, MikroORM, PrimaryKey, Property } from '@mikro-orm/core';
+import { Collection, Entity, ManyToMany, MikroORM, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { SchemaGenerator, SqliteDriver } from '@mikro-orm/sqlite';
 import { BASE_DIR } from '../bootstrap';
 
@@ -17,6 +17,8 @@ export class A {
   @ManyToMany(() => B, b => b.aCollection)
   bCollection: Collection<B> = new Collection<B>(this);
 
+  [PrimaryKeyProp]: 'uuid';
+
 }
 
 @Entity()
@@ -30,6 +32,8 @@ export class B {
 
   @ManyToMany(() => A, undefined, { fixedOrder: true })
   aCollection: Collection<A> = new Collection<A>(this);
+
+  [PrimaryKeyProp]: 'uuid';
 
 }
 

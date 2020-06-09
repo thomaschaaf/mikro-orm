@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 
 @Entity()
 export class MultiDecorator {
@@ -9,5 +9,7 @@ export class MultiDecorator {
   @Property({ type: 'string' })
   @ManyToOne({ type: 'Foo' })
   name: any;
+
+  [PrimaryKeyProp]: 'id';
 
 }

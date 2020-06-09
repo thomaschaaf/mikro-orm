@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Entity, ManyToMany, OneToMany, PrimaryKey, Property, BeforeCreate, Enum, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, ManyToMany, OneToMany, PrimaryKey, Property, BeforeCreate, Enum, SerializedPrimaryKey, PrimaryKeyProp } from '@mikro-orm/core';
 import { Book } from './Book';
 import { Test } from './Test';
 import { Collection } from '../TsMorphMetadataProvider.test';
@@ -29,6 +29,8 @@ export class Publisher {
 
   @Enum()
   type = PublisherType.LOCAL;
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
   constructor(name = 'asd', type = PublisherType.LOCAL) {
     // this.name = name;

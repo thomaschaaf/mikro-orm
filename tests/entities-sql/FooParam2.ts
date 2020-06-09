@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, PrimaryKeyType, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { FooBar2 } from './FooBar2';
 import { FooBaz2 } from './FooBaz2';
 
@@ -14,7 +14,7 @@ export class FooParam2 {
   @Property()
   value: string;
 
-  [PrimaryKeyType]: [number, number];
+  [PrimaryKeyProp]: ['bar', 'baz'];
 
   constructor(bar: FooBar2, baz: FooBaz2, value: string) {
     this.bar = bar;

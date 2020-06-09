@@ -1,4 +1,4 @@
-import { Constructor, Platform } from '@mikro-orm/core';
+import { AnyEntity, Constructor, EntityRepository, Platform } from '@mikro-orm/core';
 import { SqlEntityRepository } from './SqlEntityRepository';
 import { SchemaHelper } from './schema';
 
@@ -10,8 +10,8 @@ export abstract class AbstractSqlPlatform extends Platform {
     return true;
   }
 
-  getRepositoryClass<T>(): Constructor<SqlEntityRepository<T>> {
-    return SqlEntityRepository;
+  getRepositoryClass<T extends AnyEntity<T>>(): Constructor<EntityRepository<T>> {
+    return SqlEntityRepository as Constructor<EntityRepository<T>>;
   }
 
   getSchemaHelper(): SchemaHelper | undefined {

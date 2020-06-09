@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Collection, IdentifiedReference, Cascade, Entity, Index, ManyToMany, ManyToOne, PrimaryKey, Property, Unique, wrap } from '@mikro-orm/core';
+import { Collection, IdentifiedReference, Cascade, Entity, Index, ManyToMany, ManyToOne, PrimaryKey, Property, Unique, wrap, Relation, AnyEntity, PrimaryKeyProp } from '@mikro-orm/core';
 import { Publisher } from './Publisher';
 import { Author } from './Author';
 import { BookTag } from './book-tag';
@@ -25,13 +25,13 @@ export class Book extends BaseEntity3 {
 
   @ManyToOne(() => Publisher, { wrappedReference: true, cascade: [Cascade.PERSIST, Cascade.REMOVE] })
   @Index({ name: 'publisher_idx' })
-  publisher!: IdentifiedReference<Publisher, '_id' | 'id'>;
+  publisher?: IdentifiedReference<Publisher>;
 
   @ManyToMany(() => BookTag)
   tags: Collection<BookTag> = new Collection<BookTag>(this);
 
   @Property()
-  metaObject?: object;
+  metaObject?: unknown;
 
   @Property()
   metaArray?: any[];
@@ -42,6 +42,8 @@ export class Book extends BaseEntity3 {
   @Property()
   @Index({ type: '2dsphere' })
   point?: [number, number];
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
   constructor(title: string, author?: Author) {
     super();

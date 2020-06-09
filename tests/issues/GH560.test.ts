@@ -1,10 +1,11 @@
-import { EntitySchema, MikroORM } from '@mikro-orm/core';
+import { EntitySchema, MikroORM, PrimaryKeyProp } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { v4 } from 'uuid';
 
 class Base {
 
   id?: string;
+  [PrimaryKeyProp]: 'id';
 
 }
 

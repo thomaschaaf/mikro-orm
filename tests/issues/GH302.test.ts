@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, IdentifiedReference, MikroORM, PrimaryKey, Property, Reference, ManyToOne, OneToMany, Collection } from '@mikro-orm/core';
+import { Entity, IdentifiedReference, MikroORM, PrimaryKey, Property, Reference, ManyToOne, OneToMany, Collection, PrimaryKeyProp } from '@mikro-orm/core';
 import { SchemaGenerator, SqliteDriver } from '@mikro-orm/sqlite';
 import { BASE_DIR } from '../bootstrap';
 
@@ -15,6 +15,8 @@ export class A {
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
   @ManyToOne({ entity: () => B, inversedBy: 'a', wrappedReference: true, nullable: true })
   b?: IdentifiedReference<B>;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(id: number, name: string) {
     this.id = id;
@@ -34,6 +36,8 @@ export class B {
 
   @OneToMany({ entity: () => A, mappedBy: 'b', nullable: true })
   a = new Collection<A>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

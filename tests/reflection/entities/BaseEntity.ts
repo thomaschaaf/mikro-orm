@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 
 export abstract class BaseEntity {
 
@@ -20,5 +20,7 @@ export abstract class BaseEntity {
 
   @Property({ persist: false })
   hookTest = false;
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
 }

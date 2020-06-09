@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, MikroORM, PrimaryKey, Property, Type } from '@mikro-orm/core';
+import { Entity, MikroORM, PrimaryKey, PrimaryKeyProp, Property, Type } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 import { SchemaGenerator } from '@mikro-orm/knex';
 
@@ -27,6 +27,8 @@ class A {
 
   @Property({ type: MyType })
   prop!: string;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 
 @Entity()
 export class BadNameTest {
@@ -11,5 +11,7 @@ export class BadNameTest {
 
   @Property({ type: 'string' })
   name: any;
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
 }

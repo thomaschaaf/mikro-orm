@@ -1,13 +1,14 @@
-import { AnyEntity, Dictionary, EntityProperty, IPrimaryKey, Primary } from '../typings';
+import { AnyEntity, Dictionary, EntityProperty, EntityType, IPrimaryKey, Primary, Relation } from '../typings';
 import { ReferenceType } from './enums';
 import { Collection } from './Collection';
 import { Reference } from './Reference';
 import { wrap } from './wrap';
 import { Utils } from '../utils';
 
-export class ArrayCollection<T extends AnyEntity<T>, O extends AnyEntity<O>> {
+export class ArrayCollection<T extends AnyEntity<T>, O extends AnyEntity<O>> implements Relation<T> {
 
   [k: number]: T;
+  [EntityType]?: T;
 
   protected readonly items: T[] = [];
   private _property?: EntityProperty;

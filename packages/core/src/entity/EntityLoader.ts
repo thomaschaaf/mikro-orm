@@ -1,4 +1,4 @@
-import { AnyEntity, Dictionary, EntityProperty, FilterQuery } from '../typings';
+import { AnyEntity, EntityName, EntityProperty, FilterQuery, PopulateOptions } from '../typings';
 import { EntityManager } from '../index';
 import { LoadStrategy, ReferenceType } from './enums';
 import { Utils, ValidationError } from '../utils';
@@ -6,7 +6,6 @@ import { Collection } from './Collection';
 import { QueryOrder, QueryOrderMap } from '../enums';
 import { Reference } from './Reference';
 import { wrap } from './wrap';
-import { PopulateOptions } from '../drivers';
 
 export class EntityLoader {
 
@@ -49,10 +48,10 @@ export class EntityLoader {
       }
 
       const [f, ...parts] = p.field.split('.');
-      p.field = f;
+      p.field = f as keyof T & string;
       p.children = p.children || [];
       const prop = this.metadata.get(entityName).properties[f];
-      p.children.push(this.expandNestedPopulate(prop.type, parts));
+      (p.children as any[]).push(this.expandNestedPopulate(prop.type, parts));
     });
 
     return populate;
@@ -150,10 +149,10 @@ export class EntityLoader {
     }
 
     const ids = Utils.unique(children.map(e => Utils.getPrimaryKeyValues(e, wrap(e, true).__meta.primaryKeys, true)));
-    where = { [fk]: { $in: ids }, ...(where as Dictionary) };
+    where = { [fk]: { $in: ids }, ...where };
     orderBy = orderBy || prop.orderBy || { [fk]: QueryOrder.ASC };
 
-    return this.em.find<T>(prop.type, where, { orderBy, refresh, populate: populate.children as unknown as string[] });
+    return this.em.find(prop.type as EntityName<T>, where, { orderBy, refresh, populate: populate.children as unknown as string[] });
   }
 
   private async populateField<T extends AnyEntity<T>>(entityName: string, entities: T[], populate: PopulateOptions<T>, where: FilterQuery<T>, orderBy: QueryOrderMap, refresh: boolean): Promise<void> {
@@ -163,20 +162,21 @@ export class EntityLoader {
 
     await this.populateMany<T>(entityName, entities, populate, where, orderBy, refresh);
     const children: T[] = [];
+    const field = populate.field as string;
 
     for (const entity of entities) {
-      if (Utils.isEntity(entity[populate.field])) {
-        children.push(entity[populate.field]);
-      } else if (entity[populate.field] instanceof Reference) {
-        children.push(entity[populate.field].unwrap());
-      } else if (entity[populate.field] as unknown instanceof Collection) {
-        children.push(...entity[populate.field].getItems());
+      if (Utils.isEntity(entity[field])) {
+        children.push(entity[field]);
+      } else if (entity[field] instanceof Reference) {
+        children.push(entity[field].unwrap());
+      } else if (entity[field] as unknown instanceof Collection) {
+        children.push(...entity[field].getItems());
       }
     }
 
     const filtered = Utils.unique(children);
     const prop = this.metadata.get(entityName).properties[populate.field];
-    await this.populate<T>(prop.type, filtered, populate.children, where[prop.name], orderBy[prop.name] as QueryOrderMap, refresh, false, false);
+    await this.populate<T>(prop.type, filtered, populate.children as any[], where[prop.name], orderBy[prop.name] as QueryOrderMap, refresh, false, false);
   }
 
   private async findChildrenFromPivotTable<T extends AnyEntity<T>>(filtered: T[], prop: EntityProperty, field: keyof T, refresh: boolean, where?: FilterQuery<T>, orderBy?: QueryOrderMap): Promise<AnyEntity[]> {
@@ -246,7 +246,7 @@ export class EntityLoader {
           ret.push(...nested);
         } else {
           ret.push({
-            field: prefixed,
+            field: prefixed as keyof T & string,
             strategy: LoadStrategy.SELECT_IN,
           });
         }
@@ -273,7 +273,7 @@ export class EntityLoader {
           populate.push(...nested);
         } else {
           populate.push({
-            field: prefixed,
+            field: prefixed as keyof T & string,
             strategy: LoadStrategy.SELECT_IN,
           });
         }

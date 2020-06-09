@@ -62,7 +62,7 @@ export class SmartQueryHelper {
     return false;
   }
 
-  static processWhere<T extends AnyEntity<T>>(where: FilterQuery<T>, entityName: string, metadata: MetadataStorage): FilterQuery<T> {
+  static processWhere<T>(where: FilterQuery<T>, entityName: string, metadata: MetadataStorage): FilterQuery<T> {
     const meta = metadata.get(entityName, false, false);
 
     // inline PK-only objects in M:N queries so we don't join the target entity when not needed

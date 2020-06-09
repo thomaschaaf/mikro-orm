@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, MikroORM, EntityCaseNamingStrategy } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, EntityCaseNamingStrategy, PrimaryKeyProp } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 
 @Entity()
@@ -9,6 +9,8 @@ class A {
 
   @Property()
   prop?: string;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

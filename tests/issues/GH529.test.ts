@@ -1,4 +1,4 @@
-import { Collection, Entity, ManyToOne, MikroORM, OneToMany, PrimaryKey, PrimaryKeyType, Property } from '@mikro-orm/core';
+import { Collection, Entity, ManyToOne, MikroORM, OneToMany, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 @Entity()
@@ -6,6 +6,8 @@ export class Customer {
 
   @PrimaryKey()
   id!: number;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -30,6 +32,8 @@ export class Order {
   @Property()
   created: Date = new Date();
 
+  [PrimaryKeyProp]: 'id';
+
   constructor(customer: Customer) {
     this.customer = customer;
   }
@@ -47,6 +51,8 @@ export class Product {
 
   @Property()
   currentPrice: number;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(name: string, currentPrice: number) {
     this.name = name;
@@ -70,7 +76,7 @@ export class OrderItem {
   @Property()
   offeredPrice: number;
 
-  [PrimaryKeyType]: [number, number]; // this is needed for proper type checks in `FilterQuery`
+  [PrimaryKeyProp]: ['order', 'product'];
 
   constructor(order: Order, product: Product, amount = 1) {
     this.order = order;

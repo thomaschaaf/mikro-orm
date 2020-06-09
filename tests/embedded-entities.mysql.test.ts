@@ -1,4 +1,4 @@
-import { Embeddable, Embedded, Entity, Logger, MikroORM, PrimaryKey, Property, ReferenceType, wrap } from '@mikro-orm/core';
+import { Embeddable, Embedded, Entity, Logger, MikroORM, PrimaryKey, PrimaryKeyProp, Property, ReferenceType, wrap } from '@mikro-orm/core';
 import { MySqlDriver } from '@mikro-orm/mysql';
 
 @Embeddable()
@@ -63,6 +63,8 @@ class User {
 
   @Embedded({ prefix: false })
   address3: Address1 = new Address1();
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

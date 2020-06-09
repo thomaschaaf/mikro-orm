@@ -182,7 +182,7 @@ export class Utils {
     }
 
     const collection = entity[prop.name] as unknown instanceof ArrayCollection;
-    const noPkRef = Utils.isEntity(entity[prop.name]) && !wrap(entity[prop.name], true).__primaryKeys.every(pk => pk);
+    const noPkRef = Utils.isEntity(entity[prop.name], true) && !wrap(entity[prop.name], true).__primaryKeys.every(pk => Utils.isDefined(pk, true));
     const noPkProp = prop.primary && !Utils.isDefined(entity[prop.name], true);
     const inverse = prop.reference === ReferenceType.ONE_TO_ONE && !prop.owner;
     const discriminator = prop.name === root.discriminatorColumn;
@@ -272,18 +272,18 @@ export class Utils {
   /**
    * Extracts primary key from `data`. Accepts objects or primary keys directly.
    */
-  static extractPK<T extends AnyEntity<T>>(data: any, meta?: EntityMetadata): Primary<T> | null {
+  static extractPK<T extends AnyEntity<T>>(data: any, meta?: EntityMetadata<T>): Primary<T> | null {
     if (Utils.isPrimaryKey(data)) {
       return data as Primary<T>;
     }
 
     if (Utils.isEntity(data, true) && !meta) {
-      meta = wrap(data, true).__meta;
+      meta = wrap<T>(data, true).__meta;
     }
 
     if (Utils.isObject(data) && meta) {
       if (meta.compositePK) {
-        return Utils.getCompositeKeyHash(data, meta) as Primary<T>;
+        return Utils.getCompositeKeyHash<T>(data, meta) as unknown as Primary<T>;
       }
 
       return data[meta.primaryKeys[0]] || data[meta.serializedPrimaryKey] || null;

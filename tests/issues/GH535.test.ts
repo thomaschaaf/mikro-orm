@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, MikroORM, wrap, IdentifiedReference, OneToOne } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, wrap, IdentifiedReference, OneToOne, PrimaryKeyProp } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 @Entity()
@@ -20,6 +20,8 @@ class A {
     return this.b.getEntity().prop;
   }
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -33,6 +35,8 @@ class B {
 
   @Property()
   prop: string = 'foo';
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, IdentifiedReference, Logger, MikroORM, OneToOne, PrimaryKey, Property, QueryOrder, ReflectMetadataProvider } from '@mikro-orm/core';
+import { Entity, IdentifiedReference, Logger, MikroORM, OneToOne, PrimaryKey, PrimaryKeyProp, Property, QueryOrder, ReflectMetadataProvider } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { BASE_DIR } from '../bootstrap';
 
@@ -11,6 +11,8 @@ export class A {
 
   @OneToOne('B', 'a', { wrappedReference: true })
   b!: IdentifiedReference<B>;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -25,6 +27,8 @@ export class B {
 
   @OneToOne('A', 'b', { owner: true, wrappedReference: true })
   a!: IdentifiedReference<A>;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

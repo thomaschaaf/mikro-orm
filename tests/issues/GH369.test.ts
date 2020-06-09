@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, ManyToOne, OneToMany, PrimaryKey, Property, Collection, MikroORM, Logger } from '@mikro-orm/core';
+import { Entity, ManyToOne, OneToMany, PrimaryKey, Property, Collection, MikroORM, Logger, PrimaryKeyProp } from '@mikro-orm/core';
 import { SchemaGenerator, SqliteDriver } from '@mikro-orm/sqlite';
 
 @Entity()
@@ -11,6 +11,8 @@ class A {
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
   @OneToMany(() => B, b => b.a)
   bItems = new Collection<B>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -25,6 +27,8 @@ class B {
 
   @Property()
   foo = 'bar';
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

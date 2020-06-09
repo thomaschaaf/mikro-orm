@@ -24,7 +24,7 @@ export class MongoConnection extends Connection {
     return !!ret;
   }
 
-  getCollection(name: EntityName<AnyEntity>): Collection {
+  getCollection<T>(name: EntityName<T>): Collection {
     return this.db.collection(this.getCollectionName(name));
   }
 

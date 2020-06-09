@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { AuthorWp } from './index';
 
 @Entity({ tableName: 'book2' })
@@ -13,6 +13,8 @@ export class BookWp {
 
   @ManyToOne(() => AuthorWp)
   author?: AuthorWp;
+
+  [PrimaryKeyProp]: 'uuid';
 
   constructor(title: string) {
     this.title = title;

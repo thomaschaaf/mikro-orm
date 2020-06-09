@@ -3,15 +3,15 @@ import { EntityManager } from '../EntityManager';
 import { Platform } from '../platforms';
 import { MetadataStorage } from '../metadata';
 import { EntityValidator } from './EntityValidator';
-import { Dictionary, EntityData, EntityMetadata, Primary } from '../typings';
-import { IdentifiedReference, Reference } from './Reference';
+import { Dictionary, EntityData, EntityMetadata, Primary, IdentifiedReference } from '../typings';
+import { Reference } from './Reference';
 import { EntityTransformer } from './EntityTransformer';
 import { AssignOptions, EntityAssigner } from './EntityAssigner';
 import { EntityHelper } from './EntityHelper';
 import { Utils } from '../utils';
 import { wrap } from './wrap';
 
-export class WrappedEntity<T, PK extends keyof T> {
+export class WrappedEntity<T> {
 
   __initialized = true;
   __populated = false;
@@ -43,8 +43,8 @@ export class WrappedEntity<T, PK extends keyof T> {
     this.__populated = populated;
   }
 
-  toReference(): IdentifiedReference<T, PK> {
-    return Reference.create<T, PK>(this.entity);
+  toReference(): IdentifiedReference<T> {
+    return Reference.create<T>(this.entity);
   }
 
   toObject(ignoreFields: string[] = []): EntityData<T> {

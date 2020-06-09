@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, MikroORM } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, MikroORM, PrimaryKeyProp } from '@mikro-orm/core';
 import { MariaDbDriver } from '@mikro-orm/mariadb';
 
 @Entity()
@@ -24,6 +24,8 @@ export class FooEntity {
 
   @Property({ nullable: true })
   nullableNumberProperty?: number;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

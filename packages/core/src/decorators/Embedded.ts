@@ -3,8 +3,8 @@ import { MetadataStorage } from '../metadata';
 import { ReferenceType } from '../entity/enums';
 import { Utils } from '../utils';
 
-export function Embedded(options: EmbeddedOptions | (() => AnyEntity) = {}) {
-  return function (target: AnyEntity, propertyName: string) {
+export function Embedded<T extends AnyEntity<T>>(options: EmbeddedOptions | (() => unknown) = {}) {
+  return function (target: T, propertyName: string) {
     const meta = MetadataStorage.getMetadataFromDecorator(target.constructor);
     options = options instanceof Function ? { entity: options } : options;
     Utils.defaultValue(options, 'prefix', true);
@@ -14,7 +14,7 @@ export function Embedded(options: EmbeddedOptions | (() => AnyEntity) = {}) {
 }
 
 export type EmbeddedOptions = {
-  entity?: string | (() => AnyEntity);
+  entity?: string | (() => unknown);
   type?: string;
   prefix?: string | boolean;
   nullable?: boolean;

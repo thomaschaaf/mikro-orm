@@ -1,4 +1,4 @@
-import { Embeddable, Embedded, Entity, Logger, MikroORM, PrimaryKey, Property, ReferenceType, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Embeddable, Embedded, Entity, Logger, MikroORM, PrimaryKey, PrimaryKeyProp, Property, ReferenceType, SerializedPrimaryKey } from '@mikro-orm/core';
 import { ObjectId, MongoDriver } from '@mikro-orm/mongodb';
 
 @Embeddable()
@@ -61,11 +61,13 @@ class User {
   @Embedded(() => Address1)
   address1!: Address1;
 
-  @Embedded( { entity: () => Address2, prefix: 'addr_', nullable: true })
+  @Embedded({ entity: () => Address2, prefix: 'addr_', nullable: true })
   address2?: Address2;
 
-  @Embedded( { entity: () => Address1, prefix: false })
+  @Embedded({ entity: () => Address1, prefix: false })
   address3 = new Address1();
+
+  [PrimaryKeyProp]: 'id' | '_id';
 
 }
 

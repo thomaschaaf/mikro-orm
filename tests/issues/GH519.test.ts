@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, MikroORM, ManyToOne, Collection, OneToMany, Logger } from '@mikro-orm/core';
+import { Entity, PrimaryKey, MikroORM, ManyToOne, Collection, OneToMany, Logger, PrimaryKeyProp } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 @Entity()
@@ -9,6 +9,8 @@ class Competition {
 
   @OneToMany('Registration', 'competition', { orphanRemoval: true })
   registrations: Collection<Registration> = new Collection<Registration>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -21,6 +23,8 @@ class User {
   @OneToMany('Registration', 'user', { orphanRemoval: true })
   registrations: Collection<Registration> = new Collection<Registration>(this);
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -31,6 +35,8 @@ class Registration {
 
   @ManyToOne({ primary: true })
   user!: User;
+
+  [PrimaryKeyProp]: ['competition', 'user'];
 
   constructor(user: User, competition: Competition) {
     this.user = user;
@@ -77,8 +83,9 @@ describe('GH issue 519', () => {
     const [items, count] = await orm.em.getRepository(Registration).findAndCount({ competition });
     expect(items.length).toBe(3);
     expect(count).toBe(3);
-    expect(mock.mock.calls[0][0]).toMatch(`select "e0".* from "registration" as "e0" where "e0"."competition_id" = $1`);
-    expect(mock.mock.calls[1][0]).toMatch(`select count(distinct("e0"."competition_id", "e0"."user_id")) as "count" from "registration" as "e0" where "e0"."competition_id" = $1`);
+    const calls = mock.mock.calls.map(c => c[0]).sort();
+    expect(calls[0]).toMatch(`select "e0".* from "registration" as "e0" where "e0"."competition_id" = $1`);
+    expect(calls[1]).toMatch(`select count(distinct("e0"."competition_id", "e0"."user_id")) as "count" from "registration" as "e0" where "e0"."competition_id" = $1`);
   });
 
 });

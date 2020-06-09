@@ -19,6 +19,7 @@ const methods = {
   flush: jest.fn(),
   canPopulate: jest.fn(),
   populate: jest.fn(),
+  populateOne: jest.fn(),
   count: jest.fn(),
   create: jest.fn(),
   nativeInsert: jest.fn(),
@@ -66,8 +67,10 @@ describe('EntityRepository', () => {
     expect(methods.removeLater.mock.calls[0]).toEqual([entity]);
     await repo.create({ name: 'bar' });
     expect(methods.create.mock.calls[0]).toEqual([Publisher, { name: 'bar' }]);
-    await repo.populate([], 'bar');
-    expect(methods.populate.mock.calls[0]).toEqual([[], 'bar', {}, {}, false, true]);
+    await repo.populate([], ['bar']);
+    expect(methods.populate.mock.calls[0]).toEqual([[], ['bar'], {}, {}, false, true]);
+    await repo.populateOne({}, ['bar']);
+    expect(methods.populateOne.mock.calls[0]).toEqual([{}, ['bar'], {}, {}, false, true]);
 
     await repo.nativeInsert({ name: 'bar' });
     expect(methods.nativeInsert.mock.calls[0]).toEqual([Publisher, { name: 'bar' }]);

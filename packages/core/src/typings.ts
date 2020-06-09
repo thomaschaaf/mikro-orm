@@ -1,5 +1,5 @@
 import { QueryOrder } from './enums';
-import { AssignOptions, Cascade, Collection, EntityRepository, EntityValidator, IdentifiedReference, Reference, ReferenceType, LoadStrategy } from './entity';
+import { AssignOptions, Cascade, Collection, EntityRepository, EntityValidator, Reference, ReferenceType, LoadStrategy } from './entity';
 import { EntityManager } from './EntityManager';
 import { LockMode } from './unit-of-work';
 import { Platform } from './platforms';
@@ -24,18 +24,24 @@ export type DeepPartialEntity<T> = {
         : DeepPartialEntity<T[P]> | PartialEntity<T[P]> | Primary<T[P]> | OperatorMap<T[P]> | StringProp<T[P]>)
 };
 
-export const PrimaryKeyType = Symbol('PrimaryKeyType');
-export type Primary<T> = T extends { [PrimaryKeyType]: infer PK }
-  ? PK : T extends { _id: infer PK }
-  ? PK | string : T extends { uuid: infer PK }
-  ? PK : T extends { id: infer PK }
-  ? PK : never;
+export const EntityType = Symbol('EntityType');
+export const PrimaryKeyProp = Symbol('PrimaryKeyProp');
+
+type ExtractPrimary<T, PK> = PK extends keyof T ? T[PK] : never;
+type ExtractPrimaryFromArray<T, PK> = PK extends keyof T ? T[PK] | Primary<T[PK]> : never;
+type PrimaryType<T> = T extends { [PrimaryKeyProp]: infer PK }
+  ? PK extends any[]
+    ? { [K in keyof PK]: ExtractPrimaryFromArray<T, PK[K]> }
+    : ExtractPrimary<T, PK>
+  : never;
+export type Primary<T> = T | PrimaryType<T> | PrimaryType<PrimaryType<T>>;
+
 export type PrimaryMap<T extends AnyEntity<T>> = Record<keyof T, Primary<T>>;
 export type IPrimaryKeyValue = number | string | bigint | { toHexString(): string };
 export type IPrimaryKey<T extends IPrimaryKeyValue = IPrimaryKeyValue> = T;
 
-export type IsScalar<T> = T extends boolean | number | string | bigint | Date | RegExp ? true : never;
-export type IsEntity<T> = T extends Reference<T> | { [PrimaryKeyType]: any } | { _id: any } | { uuid: string } | { id: number | string | bigint } ? true : never;
+export type IsScalar<T> = T extends boolean | number | string | bigint | Date | RegExp | Buffer | { toHexString(): string } ? true : never;
+export type IsEntity<T> = T extends Reference<T> | { [PrimaryKeyProp]: any } ? true : never;
 
 export type OneOrArray<T> = T | T[];
 export type OperatorMap<T> = {
@@ -55,28 +61,28 @@ export type OperatorMap<T> = {
 };
 export type StringProp<T> = T extends string ? string | RegExp : never;
 export type EntityOrPrimary<T> = true extends IsScalar<T> ? never : DeepPartialEntity<ReferencedEntity<T>> | PartialEntity<ReferencedEntity<T>> | Primary<ReferencedEntity<T>> | ReferencedEntity<T>;
-export type CollectionItem<T extends AnyEntity<T>> = T extends Collection<infer K> ? EntityOrPrimary<K> : never;
-export type ReferencedEntity<T extends AnyEntity<T>> = T extends Reference<infer K> ? K : T;
+export type CollectionItem<T> = T extends Collection<infer K> ? EntityOrPrimary<K> : never;
+export type ReferencedEntity<T> = T extends Reference<infer K> ? K : T;
 export type FilterValue<T> = T | OperatorMap<T> | StringProp<T> | OneOrArray<CollectionItem<T> | EntityOrPrimary<T>> | null;
 export type Query<T> = true extends IsEntity<T>
   ? { [K in keyof T]?: Query<ReferencedEntity<T[K]>> | FilterValue<ReferencedEntity<T[K]>> | null } | FilterValue<ReferencedEntity<T>>
   : T extends Collection<infer K>
     ? { [KK in keyof K]?: Query<K[KK]> | FilterValue<K[KK]> | null } | FilterValue<K>
     : FilterValue<T>;
-export type FilterQuery<T> = Query<T> | { [PrimaryKeyType]?: any };
-export type QBFilterQuery<T = any> = FilterQuery<T> & Dictionary;
+export type FilterQuery<T> = Query<T> | Primary<T> | PrimaryMap<T> | Partial<T>;
+export type QBFilterQuery<T = any> = FilterQuery<T> | (FilterQuery<T> & Dictionary);
 
-export interface IWrappedEntity<T, PK extends keyof T> {
+export interface IWrappedEntity<T> {
   isInitialized(): boolean;
   populated(populated?: boolean): void;
   init(populated?: boolean, lockMode?: LockMode): Promise<T>;
-  toReference(): IdentifiedReference<T, PK>;
+  toReference(): IdentifiedReference<T>;
   toObject(ignoreFields?: string[]): Dictionary;
   toJSON(...args: any[]): Dictionary;
   assign(data: any, options?: AssignOptions | boolean): T;
 }
 
-export interface IWrappedEntityInternal<T, PK extends keyof T> extends IWrappedEntity<T, PK> {
+export interface IWrappedEntityInternal<T extends AnyEntity<T>> extends IWrappedEntity<T> {
   __uuid: string;
   __meta: EntityMetadata<T>;
   __internal: { platform: Platform; metadata: MetadataStorage; validator: EntityValidator };
@@ -90,7 +96,7 @@ export interface IWrappedEntityInternal<T, PK extends keyof T> extends IWrappedE
   __serializedPrimaryKey: string & keyof T;
 }
 
-export type AnyEntity<T = any, PK extends keyof T = keyof T> = { [K in PK]?: T[K] } & { [PrimaryKeyType]?: T[PK] };
+export type AnyEntity<T = any> = { [PrimaryKeyProp]?: unknown };
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EntityClass<T extends AnyEntity<T>> = Function & { prototype: T };
 export type EntityClassGroup<T extends AnyEntity<T>> = { entity: EntityClass<T>; schema: EntityMetadata<T> | EntitySchema<T> };
@@ -213,3 +219,58 @@ export interface IMigrator {
   up(options?: string | string[] | MigrateOptions): Promise<UmzugMigration[]>;
   down(options?: string | string[] | MigrateOptions): Promise<UmzugMigration[]>;
 }
+
+export type ExpandProperty<T> = T extends Reference<infer U> ? U : T extends Collection<infer U> ? U : T;
+export type PopulateChildren<T> = { [K in keyof T]?: PopulateMap<ExpandProperty<T[K]>> };
+export type PopulateMap<T> = true extends IsScalar<T> ? true : (true | LoadStrategy | PopulateChildren<T>);
+export type Populate<T> = readonly (keyof T | string)[] | boolean | PopulateMap<T>;
+
+export type PopulateOptions<T> = {
+  field: string;
+  strategy?: LoadStrategy;
+  all?: boolean;
+  children?: PopulateOptions<T[keyof T]>[];
+};
+
+export interface Relation<T extends AnyEntity<T>> {
+  [PrimaryKeyProp]?: keyof T;
+  [EntityType]?: T;
+}
+
+export type PrimaryProperty<T extends AnyEntity> = T[typeof PrimaryKeyProp];
+export type IdentifiedReference<T extends AnyEntity<T>> = Reference<T> & Pick<T, PrimaryProperty<T> & keyof T>;
+export type LoadedReference<T extends AnyEntity<T>, P = never> = IdentifiedReference<T> & { $: T & P; get(): T & P };
+
+export interface LoadedCollection<T extends AnyEntity<T>, U extends AnyEntity<U>, P = never> extends Collection<T, U> {
+  $: readonly (T & P)[];
+  get(): readonly (T & P)[];
+}
+
+type MarkLoaded<T extends AnyEntity<T>, P, H = unknown> = P extends Reference<infer U>
+  ? LoadedReference<U, Loaded<U, H>>
+  : P extends Collection<infer U>
+    ? LoadedCollection<U, T, Loaded<U, H>>
+    : P;
+
+type LoadedIfInNestedHint<T, K extends keyof T, H> = K extends keyof H
+  ? MarkLoaded<T, T[K], H[K]>
+  : T[K];
+
+type LoadedIfInKeyHint<T, K extends keyof T, H> = K extends H ? MarkLoaded<T, T[K]> : T[K];
+
+type RelationsIn<T> = SubType<T, Relation<any> | undefined>;
+
+// https://medium.com/dailyjs/typescript-create-a-condition-based-subset-types-9d902cea5b8c
+type SubType<T, C> = Pick<T, { [K in keyof T]: T[K] extends C ? K : never }[keyof T]>;
+
+type NestedLoadHint<T> = {
+  [K in keyof RelationsIn<T>]?: true | LoadStrategy | (NonNullable<T[K]> extends Relation<infer U> ? PopulateMap<U> : T[K]);
+};
+
+export type Loaded<T, P = never> = T & {
+  [K in keyof RelationsIn<T>]: P extends readonly (infer U)[]
+    ? LoadedIfInKeyHint<T, K, U>
+    : P extends NestedLoadHint<T>
+      ? LoadedIfInNestedHint<T, K, P>
+      : LoadedIfInKeyHint<T, K, P>;
+};

@@ -41,7 +41,7 @@ describe('EntityManagerSqlite', () => {
   test('should return sqlite driver', async () => {
     const driver = orm.em.getDriver();
     expect(driver).toBeInstanceOf(SqliteDriver);
-    expect(await driver.findOne(Book3.name, { title: '123' })).toBeNull();
+    expect(await driver.findOne<any>(Book3.name, { title: '123' })).toBeNull();
     expect(await driver.nativeInsert(Book3.name, { title: '123' })).not.toBeNull();
     expect(await driver.nativeInsert(BookTag3.name, { name: 'tag', books: [1] })).not.toBeNull();
     await expect(driver.getConnection().execute('select 1 as count')).resolves.toEqual([{ count: 1 }]);
@@ -58,7 +58,7 @@ describe('EntityManagerSqlite', () => {
       affectedRows: 1,
       insertId: 1,
     });
-    expect(await driver.find(BookTag3.name, { books: [1] })).not.toBeNull();
+    expect(await driver.find<any>(BookTag3.name, { books: [1] })).not.toBeNull();
   });
 
   test('driver appends errored query', async () => {
@@ -491,8 +491,8 @@ describe('EntityManagerSqlite', () => {
     await orm.em.persist([bible, bible2, bible3], true);
     orm.em.clear();
 
-    const newGod = orm.em.getReference<any>(Author3, god.id);
-    const publisher = (await orm.em.findOne<any>(Publisher3, pub.id, { populate: ['books'] }))!;
+    const newGod = orm.em.getReference(Author3, god.id);
+    const publisher = (await orm.em.findOne(Publisher3, pub.id, { populate: ['books'] }))!;
     await newGod.init();
 
     const json = publisher.toJSON().books;
@@ -569,7 +569,7 @@ describe('EntityManagerSqlite', () => {
     expect(tag5.id).toBeDefined();
 
     // test inverse side
-    const tagRepository = orm.em.getRepository<typeof BookTag3>(BookTag3);
+    const tagRepository = orm.em.getRepository<any>(BookTag3);
     let tags = await tagRepository.findAll();
     expect(tags).toBeInstanceOf(Array);
     expect(tags.length).toBe(5);

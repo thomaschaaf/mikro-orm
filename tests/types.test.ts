@@ -2,7 +2,7 @@ import { assert, Has, IsExact, IsNever } from 'conditional-type-checks';
 import { ObjectId } from 'mongodb';
 import {
   CollectionItem, DeepPartialEntity, EntityOrPrimary, FilterQuery, FilterValue, OneOrArray, OperatorMap, PartialEntity,
-  Primary, PrimaryKeyType, Query, StringProp,
+  Primary, PrimaryKeyProp, Query, StringProp,
 } from '../packages/core/src/typings';
 import { Author2, Book2, BookTag2, FooParam2 } from './entities-sql';
 import { Author, Book } from './entities';
@@ -13,24 +13,24 @@ type IsAssignable<T, Expected> = Expected extends T ? true : false;
 describe('check typings', () => {
 
   test('Primary', async () => {
-    assert<IsExact<Primary<Book2>, string>>(true);
+    assert<IsExact<Primary<Book2>, string | Book2>>(true);
     assert<IsExact<Primary<Book2>, number>>(false);
-    assert<IsExact<Primary<Author2>, number>>(true);
+    assert<IsExact<Primary<Author2>, number | Author2>>(true);
     assert<IsExact<Primary<Author2>, string>>(false);
 
     // PrimaryKeyType symbol has priority
-    type Test = { _id: ObjectId; id: string; uuid: number; [PrimaryKeyType]: Date };
-    assert<IsExact<Primary<Test>, Date>>(true);
+    type Test = { _id: Date; id: string; uuid: number; [PrimaryKeyProp]: '_id' };
+    assert<IsExact<Primary<Test>, Date | Test>>(true);
     assert<IsExact<Primary<Test>, ObjectId>>(false);
     assert<IsExact<Primary<Test>, string>>(false);
     assert<IsExact<Primary<Test>, number>>(false);
 
     // object id allows string
-    assert<IsExact<Primary<Author>, ObjectId | string>>(true);
+    assert<IsExact<Primary<Author>, ObjectId | string | Author>>(true);
     assert<IsExact<Primary<Author>, number>>(false);
 
     // bigint support
-    assert<IsExact<Primary<BookTag2>, string>>(true);
+    assert<IsExact<Primary<BookTag2>, string | BookTag2>>(true);
     assert<IsExact<Primary<BookTag2>, number>>(false);
   });
 

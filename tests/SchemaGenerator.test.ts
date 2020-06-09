@@ -213,7 +213,7 @@ describe('SchemaGenerator', () => {
     const meta = orm.getMetadata();
     const generator = new SchemaGenerator(orm.em);
 
-    const newTableMeta = new EntitySchema({
+    const newTableMeta = new EntitySchema<any>({
       properties: {
         id: {
           primary: true,
@@ -266,7 +266,7 @@ describe('SchemaGenerator', () => {
     const meta = orm.getMetadata();
     const generator = new SchemaGenerator(orm.em);
 
-    const newTableMeta = new EntitySchema({
+    const newTableMeta = new EntitySchema<any>({
       properties: {
         id: {
           primary: true,

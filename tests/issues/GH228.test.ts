@@ -1,5 +1,5 @@
 import { unlinkSync } from 'fs';
-import { Entity, ManyToOne, MikroORM, PrimaryKey, Property, Logger } from '@mikro-orm/core';
+import { Entity, ManyToOne, MikroORM, PrimaryKey, Property, Logger, PrimaryKeyProp } from '@mikro-orm/core';
 import { SchemaGenerator, SqliteDriver } from '@mikro-orm/sqlite';
 import { BASE_DIR } from '../bootstrap';
 
@@ -11,6 +11,8 @@ export class B {
 
   @Property({ type: 'string' })
   name!: string;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -25,6 +27,8 @@ export class A {
 
   @ManyToOne(() => B)
   type!: B;
+
+  [PrimaryKeyProp]: 'id';
 
 }
 

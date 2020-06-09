@@ -1,4 +1,4 @@
-import { Collection, Entity, ManyToOne, MikroORM, OneToMany, PrimaryKey, PrimaryKeyType, Reference, IdentifiedReference } from '@mikro-orm/core';
+import { Collection, Entity, ManyToOne, MikroORM, OneToMany, PrimaryKey, Reference, IdentifiedReference, PrimaryKeyProp } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 @Entity()
@@ -9,6 +9,8 @@ export class User {
 
   @OneToMany('Chat', 'owner')
   ownedChats = new Collection<Chat>(this);
+
+  [PrimaryKeyProp]: 'id';
 
 }
 
@@ -21,7 +23,7 @@ export class Chat {
   @ManyToOne(() => User, { primary: true, wrappedReference: true })
   recipient: IdentifiedReference<User>;
 
-  [PrimaryKeyType]: [number, number];
+  [PrimaryKeyProp]: ['owner', 'recipient'];
 
   constructor(owner: User, recipient: User) {
     this.owner = Reference.create(owner);

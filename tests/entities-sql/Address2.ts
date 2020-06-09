@@ -1,4 +1,4 @@
-import { Entity, Property, OneToOne } from '@mikro-orm/core';
+import { Entity, Property, OneToOne, PrimaryKeyProp } from '@mikro-orm/core';
 import { Author2 } from './Author2';
 
 @Entity()
@@ -9,6 +9,8 @@ export class Address2 {
 
   @Property()
   value: string;
+
+  [PrimaryKeyProp]: 'author';
 
   constructor(author: Author2, value: string) {
     this.author = author;

@@ -1,4 +1,4 @@
-import { Cascade, Entity, ManyToMany, ManyToOne, Property } from '@mikro-orm/core';
+import { Cascade, Entity, ManyToMany, ManyToOne, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { Publisher } from './Publisher';
 import { Author } from './Author';
 import { BookTag } from './BookTag';
@@ -15,19 +15,21 @@ export class Book extends BaseEntity3 {
   author: Author;
 
   @ManyToOne({ cascade: [Cascade.PERSIST, Cascade.REMOVE] })
-  publisher!: IdentifiedReference<Publisher, '_id' | 'id'>;
+  publisher!: IdentifiedReference<Publisher>;
 
   @ManyToMany()
   tags: Collection<BookTag> = new Collection<BookTag>(this);
 
   @Property()
-  metaObject?: object;
+  metaObject?: unknown;
 
   @Property()
   metaArray?: any[];
 
   @Property()
   metaArrayOfStrings?: string[];
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
   constructor(title: string, author?: Author) {
     super();

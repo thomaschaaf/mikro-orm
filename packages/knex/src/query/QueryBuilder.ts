@@ -11,7 +11,7 @@ import { SqlEntityManager } from '../SqlEntityManager';
 /**
  * SQL query builder
  */
-export class QueryBuilder<T extends AnyEntity<T> = AnyEntity> {
+export class QueryBuilder<T = AnyEntity> {
 
   type!: QueryType;
   _fields?: Field[];
@@ -104,10 +104,10 @@ export class QueryBuilder<T extends AnyEntity<T> = AnyEntity> {
   where(cond: QBFilterQuery<T>, operator?: keyof typeof GroupOperator): this;
   where(cond: string, params?: any[], operator?: keyof typeof GroupOperator): this;
   where(cond: QBFilterQuery<T> | string, params?: keyof typeof GroupOperator | any[], operator?: keyof typeof GroupOperator): this {
-    cond = SmartQueryHelper.processWhere(cond as Dictionary, this.entityName, this.metadata)!;
+    cond = SmartQueryHelper.processWhere<T>(cond as QBFilterQuery<T>, this.entityName, this.metadata)! as QBFilterQuery<T>;
 
     if (Utils.isString(cond)) {
-      cond = { [`(${cond})`]: Utils.asArray(params) };
+      cond = { [`(${cond})`]: Utils.asArray(params) } as QBFilterQuery<T>;
       operator = operator || '$and';
     }
 
@@ -168,7 +168,7 @@ export class QueryBuilder<T extends AnyEntity<T> = AnyEntity> {
   /**
    * @internal
    */
-  populate<T>(populate: PopulateOptions<T>[]): this {
+  populate(populate: PopulateOptions<T>[]): this {
     this._populate = populate;
 
     return this;
@@ -514,9 +514,7 @@ export class QueryBuilder<T extends AnyEntity<T> = AnyEntity> {
     const subSubSubQuery = this.getKnex().select(pks).from(subSubQuery.as(this.alias));
     this._limit = undefined;
     this._offset = undefined;
-    this.select(this._fields!).where({
-      [Utils.getPrimaryKeyHash(meta.primaryKeys)]: { $in: subSubSubQuery },
-    });
+    this.select(this._fields!).where({ [Utils.getPrimaryKeyHash(meta.primaryKeys)]: { $in: subSubSubQuery } } as QBFilterQuery<T>);
   }
 
   private wrapModifySubQuery(meta: EntityMetadata): void {
@@ -528,9 +526,7 @@ export class QueryBuilder<T extends AnyEntity<T> = AnyEntity> {
     const subSubQuery = this.getKnex().select(this.prepareFields(meta.primaryKeys)).from(subQuery.as(this.alias));
     const method = this.flags.has(QueryFlag.UPDATE_SUB_QUERY) ? 'update' : 'delete';
 
-    this[method](this._data).where({
-      [Utils.getPrimaryKeyHash(meta.primaryKeys)]: { $in: subSubQuery },
-    });
+    this[method](this._data).where({ [Utils.getPrimaryKeyHash(meta.primaryKeys)]: { $in: subSubQuery } } as QBFilterQuery<T>);
   }
 
   private autoJoinPivotTable(field: string): void {

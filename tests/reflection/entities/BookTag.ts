@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Collection, EntitySchema } from '@mikro-orm/core';
+import { Collection, EntitySchema, PrimaryKeyProp } from '@mikro-orm/core';
 import { Book } from './Book';
 
 export class BookTag {
@@ -8,6 +8,7 @@ export class BookTag {
   id!: string;
   name: string;
   books = new Collection<Book>(this);
+  [PrimaryKeyProp]: '_id' | 'id';
 
   constructor(name: string) {
     this.name = name;

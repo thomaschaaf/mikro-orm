@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { Entity, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 
 @Entity()
 export class Test {
@@ -14,6 +14,8 @@ export class Test {
 
   @Property({ hidden: true })
   hiddenField?: number = Date.now();
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
   constructor(props: Partial<Test> = {}) {
     this._id = props._id;

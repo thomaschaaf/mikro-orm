@@ -1,5 +1,5 @@
 import { inspect } from 'util';
-import { EntityProperty, MetadataStorage, ReferenceType, Utils } from '@mikro-orm/core';
+import { Dictionary, EntityProperty, MetadataStorage, ReferenceType, Utils } from '@mikro-orm/core';
 import { QueryBuilder } from './QueryBuilder';
 import { ObjectCriteriaNode, ScalarCriteriaNode, ArrayCriteriaNode, QueryBuilderHelper } from './internal';
 
@@ -32,20 +32,20 @@ export class CriteriaNode {
 
   static create(metadata: MetadataStorage, entityName: string, payload: any, parent?: CriteriaNode, key?: string): CriteriaNode {
     const customExpression = QueryBuilderHelper.isCustomExpression(key || '');
-    const scalar = Utils.isPrimaryKey(payload) || payload instanceof RegExp || payload instanceof Date || customExpression;
+    const scalar = Utils.isPrimaryKey(payload) || payload as unknown instanceof RegExp || payload as unknown instanceof Date || customExpression;
 
     if (Array.isArray(payload) && !scalar) {
       return ArrayCriteriaNode.create(metadata, entityName, payload, parent, key);
     }
 
     if (Utils.isPlainObject(payload) && !scalar) {
-      return ObjectCriteriaNode.create(metadata, entityName, payload, parent, key);
+      return ObjectCriteriaNode.create(metadata, entityName, payload as Dictionary, parent, key);
     }
 
     return ScalarCriteriaNode.create(metadata, entityName, payload, parent, key);
   }
 
-  process(qb: QueryBuilder, alias?: string): any {
+  process<T>(qb: QueryBuilder<T>, alias?: string): any {
     return this.payload;
   }
 
@@ -53,7 +53,7 @@ export class CriteriaNode {
     return false;
   }
 
-  willAutoJoin(qb: QueryBuilder, alias?: string) {
+  willAutoJoin<T>(qb: QueryBuilder<T>, alias?: string) {
     return false;
   }
 
@@ -61,7 +61,7 @@ export class CriteriaNode {
     const type = this.prop ? this.prop.reference : null;
     const composite = this.prop && this.prop.joinColumns ? this.prop.joinColumns.length > 1 : false;
     const customExpression = QueryBuilderHelper.isCustomExpression(this.key!);
-    const scalar = payload === null || Utils.isPrimaryKey(payload) || payload instanceof RegExp || payload instanceof Date || customExpression;
+    const scalar = payload === null || Utils.isPrimaryKey(payload) || payload as unknown instanceof RegExp || payload as unknown instanceof Date || customExpression;
     const operator = Utils.isPlainObject(payload) && Object.keys(payload).every(k => Utils.isOperator(k, false));
 
     if (composite) {
@@ -77,7 +77,7 @@ export class CriteriaNode {
     }
   }
 
-  renameFieldToPK(qb: QueryBuilder): string {
+  renameFieldToPK<T>(qb: QueryBuilder<T>): string {
     if (this.prop!.reference === ReferenceType.MANY_TO_MANY) {
       const alias = qb.getAliasForJoinPath(this.getPath());
       return Utils.getPrimaryKeyHash(this.prop!.inverseJoinColumns.map(col => `${alias}.${col}`));
@@ -116,7 +116,7 @@ export class CriteriaNode {
     }
 
     const customExpression = QueryBuilderHelper.isCustomExpression(this.key);
-    const scalar = this.payload === null || Utils.isPrimaryKey(this.payload) || this.payload instanceof RegExp || this.payload instanceof Date || customExpression;
+    const scalar = this.payload === null || Utils.isPrimaryKey(this.payload) || this.payload as unknown instanceof RegExp || this.payload as unknown instanceof Date || customExpression;
     const operator = Utils.isObject(this.payload) && Object.keys(this.payload).every(k => Utils.isOperator(k, false));
     const pivotJoin = this.prop.reference === ReferenceType.MANY_TO_MANY && (scalar || operator);
 

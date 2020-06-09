@@ -1,4 +1,4 @@
-import { Collection, Entity, Enum, ManyToMany, OneToMany, Property } from '@mikro-orm/core';
+import { Collection, Entity, Enum, ManyToMany, OneToMany, PrimaryKeyProp, Property } from '@mikro-orm/core';
 import { Book2 } from './Book2';
 import { Test2 } from './Test2';
 import { BaseEntity2 } from './BaseEntity2';
@@ -52,6 +52,8 @@ export class Publisher2 extends BaseEntity2 {
 
   @Enum({ items: ['a', 'b', 'c'], nullable: true })
   enum4?: any;
+
+  [PrimaryKeyProp]: 'id';
 
   constructor(name = 'asd', type = PublisherType.LOCAL) {
     super();

@@ -1,9 +1,9 @@
 import { wrap } from './wrap';
-import { IdentifiedReference, Reference } from './Reference';
-import { Dictionary, EntityData, IWrappedEntity } from '../typings';
+import { Reference } from './Reference';
+import { Dictionary, EntityData, IWrappedEntity, IdentifiedReference } from '../typings';
 import { AssignOptions, EntityAssigner } from './EntityAssigner';
 
-export abstract class BaseEntity<T, PK extends keyof T> implements IWrappedEntity<T, PK> {
+export abstract class BaseEntity<T> implements IWrappedEntity<T> {
 
   isInitialized(): boolean {
     return wrap(this, true).isInitialized();
@@ -13,8 +13,8 @@ export abstract class BaseEntity<T, PK extends keyof T> implements IWrappedEntit
     wrap(this, true).populated(populated);
   }
 
-  toReference(): IdentifiedReference<T, PK> {
-    return Reference.create<T, PK>(this as unknown as T);
+  toReference(): IdentifiedReference<T> {
+    return Reference.create<T>(this as unknown as T);
   }
 
   toObject(ignoreFields: string[] = []): EntityData<T> {

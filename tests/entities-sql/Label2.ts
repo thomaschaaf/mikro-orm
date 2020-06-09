@@ -1,4 +1,4 @@
-import { Entity, AnyEntity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property, PrimaryKeyProp } from '@mikro-orm/core';
 import { v4 } from 'uuid';
 
 @Entity()
@@ -10,10 +10,10 @@ export class Label2 {
   @Property()
   name: string;
 
+  [PrimaryKeyProp]: 'uuid';
+
   constructor(name: string) {
     this.name = name;
   }
 
 }
-
-export interface Label2 extends AnyEntity<string> { }

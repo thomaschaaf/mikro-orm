@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { ArrayType, Entity, JsonType, OneToOne, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
+import { ArrayType, Entity, JsonType, OneToOne, PrimaryKey, PrimaryKeyProp, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 import { FooBaz } from './FooBaz';
 
 @Entity()
@@ -34,6 +34,8 @@ export default class FooBar {
 
   @Property({ onCreate: (bar: FooBar) => bar.meta.onUpdateCalled = true })
   onUpdateTest?: boolean;
+
+  [PrimaryKeyProp]: '_id' | 'id';
 
   readonly meta = { onCreateCalled: false, onUpdateCalled: false };
 

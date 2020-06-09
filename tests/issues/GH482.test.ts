@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, MikroORM, BigIntType, OneToMany, Collection, Enum, ManyToOne, Logger } from '@mikro-orm/core';
+import { Entity, PrimaryKey, MikroORM, BigIntType, OneToMany, Collection, Enum, ManyToOne, Logger, PrimaryKeyProp } from '@mikro-orm/core';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 
 export enum LevelType {
@@ -15,6 +15,8 @@ class Job {
   @OneToMany('Level', 'job', { orphanRemoval: true })
   levels = new Collection<Level>(this);
 
+  [PrimaryKeyProp]: 'id';
+
 }
 
 @Entity()
@@ -25,6 +27,8 @@ class Level {
 
   @ManyToOne({ primary: true })
   job!: Job;
+
+  [PrimaryKeyProp]: ['type', 'job'];
 
   constructor(type: LevelType) {
     this.type = type;
