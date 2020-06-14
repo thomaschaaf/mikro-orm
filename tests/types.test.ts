@@ -1,157 +1,152 @@
-import { assert, Has, IsExact, IsNever } from 'conditional-type-checks';
 import { ObjectId } from 'mongodb';
-import {
-  CollectionItem, DeepPartialEntity, EntityOrPrimary, FilterQuery, FilterValue, OneOrArray, OperatorMap, PartialEntity,
-  Primary, PrimaryKeyProp, Query, StringProp,
-} from '../packages/core/src/typings';
+import { FilterQuery, FilterValue, Primary, Query } from '../packages/core/src/typings';
 import { Author2, Book2, BookTag2, FooParam2 } from './entities-sql';
 import { Author, Book } from './entities';
-import { Collection } from '@mikro-orm/core';
-
-type IsAssignable<T, Expected> = Expected extends T ? true : false;
 
 describe('check typings', () => {
 
   test('Primary', async () => {
-    assert<IsExact<Primary<Book2>, string | Book2>>(true);
-    assert<IsExact<Primary<Book2>, number>>(false);
-    assert<IsExact<Primary<Author2>, number | Author2>>(true);
-    assert<IsExact<Primary<Author2>, string>>(false);
+    let author2: Primary<Author2>;
+    author2 = 1;
+    author2 = {} as Author2;
 
-    // PrimaryKeyType symbol has priority
-    type Test = { _id: Date; id: string; uuid: number; [PrimaryKeyProp]: '_id' };
-    assert<IsExact<Primary<Test>, Date | Test>>(true);
-    assert<IsExact<Primary<Test>, ObjectId>>(false);
-    assert<IsExact<Primary<Test>, string>>(false);
-    assert<IsExact<Primary<Test>, number>>(false);
+    // @ts-expect-error
+    author2 = '1';
+    // @ts-expect-error
+    author2 = {} as Book2;
+
+    let book: Primary<Book2>;
+    book = '1';
+    book = {} as Book2;
+    // @ts-expect-error
+    book = 1;
 
     // object id allows string
-    assert<IsExact<Primary<Author>, ObjectId | string | Author>>(true);
-    assert<IsExact<Primary<Author>, number>>(false);
+    let author1: Primary<Author>;
+    author1 = {} as ObjectId;
+    author1 = '1';
+    // @ts-expect-error
+    author1 = 1;
 
     // bigint support
-    assert<IsExact<Primary<BookTag2>, string | BookTag2>>(true);
-    assert<IsExact<Primary<BookTag2>, number>>(false);
-  });
-
-  test('EntityOrPrimary', async () => {
-    assert<IsExact<EntityOrPrimary<Book2>, PartialEntity<Book2> | DeepPartialEntity<Book2> | string>>(true);
-    assert<Has<EntityOrPrimary<Book2>, { title?: string }>>(true);
-    assert<Has<EntityOrPrimary<Book2>, { name: string }>>(false);
-    assert<Has<EntityOrPrimary<Book2>, { born: Date }>>(false);
-    assert<IsExact<EntityOrPrimary<Author2>, PartialEntity<Author2> | DeepPartialEntity<Author2> | number>>(true);
-    assert<Has<EntityOrPrimary<Author2>, string>>(false);
-    assert<Has<EntityOrPrimary<Author2>, { born?: Date }>>(true);
-    assert<Has<EntityOrPrimary<Author2>, { name: string }>>(true);
-    assert<Has<EntityOrPrimary<Author2>, { name: null }>>(false);
-  });
-
-  test('OneOrArray', async () => {
-    assert<IsExact<OneOrArray<string>, string | string[]>>(true);
-    assert<IsExact<OneOrArray<number>, number | number[]>>(true);
-    assert<IsExact<OneOrArray<Author2>, Author2 | Author2[]>>(true);
-  });
-
-  test('StringProp', async () => {
-    assert<IsExact<StringProp<string>, string | RegExp>>(true);
-    assert<IsNever<StringProp<number>>>(true);
-    assert<IsNever<StringProp<number>>>(true);
-    assert<IsNever<StringProp<Date>>>(true);
-  });
-
-  test('CollectionItem', async () => {
-    assert<IsExact<CollectionItem<Author2['books']>, EntityOrPrimary<Book2>>>(true);
-    assert<Has<CollectionItem<Author2['books']>, string>>(true);
-    assert<Has<CollectionItem<Author['books']>, ObjectId>>(true);
-    assert<Has<CollectionItem<Collection<Book2>>, string>>(true);
-    assert<Has<CollectionItem<Collection<Book>>, ObjectId>>(true);
-    assert<Has<CollectionItem<Collection<Book>>, Book>>(true);
-    assert<IsNever<CollectionItem<number>>>(true);
-    assert<IsNever<CollectionItem<string>>>(true);
-    assert<IsNever<CollectionItem<Book>>>(true);
-    assert<IsNever<CollectionItem<Book2>>>(true);
-    assert<IsNever<CollectionItem<Date>>>(true);
-    assert<Has<CollectionItem<Collection<Author2>>, number[]>>(false);
+    let tag1: Primary<BookTag2>;
+    tag1 = '1';
+    tag1 = {} as BookTag2;
+    // @ts-expect-error
+    tag1 = 1;
   });
 
   test('FilterValue', async () => {
-    assert<IsExact<FilterValue<string>, RegExp | string | null | never[] | OperatorMap<string>>>(true); // strings allow regexps
-    assert<IsExact<FilterValue<number>, number | null | never[] | OperatorMap<number>>>(true);
-    assert<Has<FilterValue<string>, number>>(false);
-    assert<IsExact<FilterValue<Date>, Date | null | never[] | OperatorMap<Date>>>(true);
-    assert<IsExact<FilterValue<RegExp>, RegExp | null | never[] | OperatorMap<RegExp>>>(true);
-    assert<Has<FilterValue<string>, number>>(false);
+    let fv1: FilterValue<string>;
+    fv1 = /1/;
+    fv1 = '1';
+    fv1 = null;
+    fv1 = { $in: ['1', '2'] };
+    // @ts-expect-error
+    fv1 = 1;
 
-    // require specific type
-    assert<Has<FilterValue<number>, string>>(false);
-    assert<Has<FilterValue<Date>, string>>(false);
-    assert<Has<FilterValue<Date>, number>>(false);
+    let fv2: FilterValue<number>;
+    fv2 = 1;
+    fv2 = null;
+    fv2 = { $in: [1, 2] };
+    // @ts-expect-error
+    fv2 = { $in: ['1', '2'] };
+    // @ts-expect-error
+    fv2 = '1';
+
+    let fv3: FilterValue<Date>;
+    fv3 = new Date();
+    fv3 = 123;
+    fv3 = '2020-10-10';
+    // @ts-expect-error
+    fv3 = true;
+
+    let fv4: FilterValue<RegExp>;
+    // @ts-expect-error
+    fv4 = new Date();
+    fv4 = /123/;
 
     // allows collection item
-    assert<Has<FilterValue<Collection<Book2>>, string>>(true);
-    assert<Has<FilterValue<Collection<Author2>>, number>>(true);
-    assert<Has<FilterValue<Collection<Author2>>, string>>(false);
-    assert<Has<FilterValue<Collection<Author2>>, Author2>>(true);
-    assert<Has<FilterValue<Collection<Author2>>, string[]>>(false);
-    assert<Has<FilterValue<Collection<Author2>>, Book2[]>>(false);
-    assert<Has<FilterValue<Author['books']>, ObjectId>>(true);
-    assert<Has<FilterValue<Collection<Book2>>, string>>(true);
-    assert<Has<FilterValue<Collection<Book>>, ObjectId>>(true);
-
-    // allows entity/pk and arrays of entity/pk
-    assert<Has<FilterValue<Author2>, Author2>>(true);
-    assert<Has<FilterValue<Author2>, number>>(true);
-
-    // date requires date
-    assert<Has<FilterValue<Author['born']>, Date>>(true);
-    assert<Has<FilterValue<Author['born']>, number>>(false);
-    assert<Has<FilterValue<Author['born']>, string>>(false);
+    // let fv5: FilterValue<Collection<Book2>>;
+    // fv5 = '1';
+    // fv5 = 1;
+    // fv5 = {} as Book2;
+    // assert<Has<FilterValue<Collection<Book2>>, string>>(true);
+    // assert<Has<FilterValue<Collection<Author2>>, number>>(true);
+    // assert<Has<FilterValue<Collection<Author2>>, string>>(false);
+    // assert<Has<FilterValue<Collection<Author2>>, Author2>>(true);
+    // assert<Has<FilterValue<Collection<Author2>>, string[]>>(false);
+    // assert<Has<FilterValue<Collection<Author2>>, Book2[]>>(false);
+    // assert<Has<FilterValue<Author['books']>, ObjectId>>(true);
+    // assert<Has<FilterValue<Collection<Book2>>, string>>(true);
+    // assert<Has<FilterValue<Collection<Book>>, ObjectId>>(true);
+    //
+    // // allows entity/pk and arrays of entity/pk
+    // assert<Has<FilterValue<Author2>, Author2>>(true);
+    // assert<Has<FilterValue<Author2>, number>>(true);
+    //
+    // // date requires date
+    // assert<Has<FilterValue<Author['born']>, Date>>(true);
+    // assert<Has<FilterValue<Author['born']>, number>>(false);
+    // assert<Has<FilterValue<Author['born']>, string>>(false);
   });
 
   test('Query', async () => {
-    assert<Has<Query<Author['born']>, Date>>(true);
-    assert<Has<Query<Author['born']>, number>>(false);
-    assert<Has<Query<Author['born']>, string>>(false);
-    assert<Has<Query<Author>, { born?: Date }>>(true);
-    assert<Has<Query<Author>, { born?: number }>>(false);
-    assert<Has<Query<Author>, { born?: string }>>(false);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: string }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: null }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: number }>>(false);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: { author: number } }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: { author: null } }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: { author: string } }>>(false);
-    assert<Has<Query<Author2>, Author2>>(true);
-    assert<Has<Query<Author2>, number>>(true);
-    assert<Has<Query<Author2>, string>>(false);
-    assert<Has<Query<Author2>, { books: { author: { born?: string } }; favouriteBook: null }>>(false);
-    assert<Has<Query<Author2>, { books: { author: { born?: number } }; favouriteBook: null }>>(false);
-    assert<Has<Query<Book2>, { author: { born?: Date } }>>(true);
-    assert<Has<Query<Book2>, { author: { born?: string } }>>(false);
-    assert<Has<Query<Book2>, { author: { born?: number } }>>(false);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: { author: { born: Date } } }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: { author: { books: string[] } } }>>(true);
-    assert<IsAssignable<Query<Book2>, { author: { books: string[] } }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: Date } } }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: null } } }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: null }>>(true);
-    assert<IsAssignable<Query<Author2>, { favouriteBook: string }>>(true);
-    assert<Has<Query<Author2>, { favouriteBook: number }>>(false);
-    assert<Has<Query<Book2>, { author: { born?: Date }; favouriteBook: string }>>(false); // favouriteBook does not exist on Book2
-    assert<IsAssignable<Query<Book2>, { author: { books: { publisher: number } } }>>(true);
-    assert<IsAssignable<Query<Book2>, { author: { books: { publisher: null } } }>>(true);
-    assert<Has<Query<Author2>, { favouriteBook?: Query<Book2> }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: FilterValue<Book2> }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: string }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: string[] }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: Book2 }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: Book2[] }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: null }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: Author2 }; favouriteBook: Book2 }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: Date } }; favouriteBook: null }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: Date } }; favouriteBook: Book2 }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: Date } }; favouriteBook: null }>>(true);
-    assert<IsAssignable<Query<Author2>, { books: { author: { born: Date } }; favouriteBook: { title: null } }>>(true);
+    let q1: Query<Date | undefined>;
+    q1 = new Date();
+    q1 = 1;
+    q1 = '1';
+
+    let q2: Query<Author>;
+    q2 = { born: new Date() };
+    q2 = { born: 1 };
+    q2 = { born: '1' };
+
+    let q3: Query<Author2>;
+    q3 = { favouriteBook: '1' };
+    q3 = { favouriteBook: null };
+    // @ts-expect-error
+    q3 = { favouriteBook: 1 };
+    q3 = { favouriteBook: { author: 1 } };
+    q3 = { favouriteBook: { author: null } };
+    // @ts-expect-error
+    q3 = { favouriteBook: { author: '1' } };
+    q3 = { books: { author: { born: '1' } }, favouriteBook: null };
+    q3 = { books: { author: { born: 1 } }, favouriteBook: null };
+    // @ts-expect-error
+    q3 = { books: { author: { born: false } }, favouriteBook: null };
+    q3 = { favouriteBook: { author: { born: new Date() } } };
+    q3 = { favouriteBook: { author: { books: ['1', '2'] } } };
+    q3 = { books: { author: { born: new Date() } } };
+    q3 = { books: { author: { born: null } } };
+    q3 = { favouriteBook: null };
+    q3 = { favouriteBook: '1' };
+    // @ts-expect-error
+    q3 = { favouriteBook: 1 };
+    q3 = { favouriteBook: {} as Book2 };
+    q3 = { books: {} as Book2 };
+    q3 = { books: '1' };
+    q3 = { books: ['1',  '2'] };
+    q3 = { books: {} as Book2 };
+    q3 = { books: [] as Book2[] };
+    q3 = { books: null };
+    q3 = { books: { author: {} as Author2 }, favouriteBook: {} as Book2 };
+    q3 = { books: { author: { born: new Date() } }, favouriteBook: null };
+    q3 = { books: { author: { born: new Date() } }, favouriteBook: {} as Book2 };
+    q3 = { books: { author: { born: new Date() } }, favouriteBook: null };
+    q3 = { books: { author: { born: new Date() } }, favouriteBook: { title: null } };
+
+    let q4: Query<Book2>;
+    q4 = { author: { born: new Date() } };
+    q4 = { author: { born: '1' } };
+    q4 = { author: { born: 1 } };
+    // @ts-expect-error
+    q4 = { author: { born: false } };
+    q4 = { author: { books: ['1', '2'] } };
+    // @ts-expect-error
+    q4 = { author: { born: new Date() }, favouriteBook: '1' };
+    q4 = { author: { books: { publisher: 1 } } };
+    q4 = { author: { books: { publisher: null } } };
 
     let t1: Query<Book2>;
     t1 = { author: { books: { publisher: 1 } } }; // ok
@@ -160,125 +155,112 @@ describe('check typings', () => {
     let t2: Query<Author2>;
     t2 = { age: { $gte: 1 } };
     t2 = { books: { author: { born: new Date() } }, favouriteBook: null };
-    // @ts-expect-error
-    t2 = { books: { author: { born: 1 } }, favouriteBook: null };
-    // @ts-expect-error
-    t2 = { books: { author: { born: '1' } }, favouriteBook: null };
   });
 
   test('FilterQuery', async () => {
-    assert<Has<FilterQuery<Author2>, number>>(true);
-    assert<Has<FilterQuery<Author2>, string>>(false);
+    test('ok assignments', async () => {
+      let ok01: FilterQuery<Author2>;
+      ok01 = null;
+      ok01 = 1;
+      ok01 = {};
+      ok01 = { born: new Date() };
+      ok01 = { born: { $gte: new Date() } };
+      ok01 = { age: { $gte: 1 } };
+      ok01 = { favouriteBook: '1' };
+      ok01 = { favouriteBook: ['1', '2'] };
+      ok01 = { favouriteBook: null };
+      ok01 = { books: { author: { born: new Date() } }, favouriteBook: null };
+      ok01 = { books: { author: { born: new Date() } } };
+      ok01 = { books: { author: { born: new Date() } }, favouriteBook: {} as Book2 };
+      ok01 = { books: { tags: { name: 'asd' } } };
+      ok01 = { books: { tags: '1' } };
+      ok01 = { books: { tags: { books: { title: 'asd' } } } };
+      ok01 = { name: 'asd' };
+      ok01 = { $or: [{ name: 'asd' }, { age: 18 }] };
+      ok01 = { books: { author: { born: 123 } }, favouriteBook: null };
+      ok01 = { born: 123 };
+      ok01 = { books: { author: { born: 123 } }, favouriteBook: null };
+      ok01 = { books: { author: { born: '123' } }, favouriteBook: null };
+      ok01 = { favouriteBook: null };
+      ok01 = { books: { author: { name: 'asd' } } };
+      ok01 = { books: { author: {} as Author2 } };
+      ok01 = { books: { author: 123 } };
+      ok01 = { books: { title: '123' }, favouriteBook: null };
+      ok01 = { born: new Date() };
+      ok01 = { age: { $in: [1] } };
 
-    assert<IsAssignable<FilterQuery<Book2>, { author: 123 }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { favouriteBook: null }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { books: { author: { name: 'asd' } } }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { books: { author: Author2 } }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { books: { author: 123 } }>>(true);
-    // assert<IsAssignable<FilterQuery<Author2>, { books: { author: '123' } }>>(false); // hard to test failures
+      ok01 = { age: { $gte: 1 } };
+      ok01 = { age: { $gte: 1 }, born: { $lt: new Date() }, $and: [{ name: { $ne: 'John' } }, { name: { $in: ['Ben', 'Paul'] } }] };
+      ok01 = { favouriteBook: {} as Book2 };
+      ok01 = { $and: [{ favouriteBook: {} as Book2 }, { name: '1' }] };
+      ok01 = { $and: [{ favouriteBook: { title: '1' } }, { name: '1' }] };
+      ok01 = { $and: [{ favouriteBook: '1' }, { name: '1' }] };
+      ok01 = {} as Author2;
+      ok01 = 1;
+      ok01 = { favouriteBook: [] as Book2[] };
+      ok01 = { books: { tags: [] as string[] } };
+      ok01 = { books: { tags: '1' } };
 
-    assert<IsAssignable<FilterQuery<Author2>, { books: { title: '123' }; favouriteBook: null }>>(true);
-    // assert<IsAssignable<FilterQuery<Author2>, { books: { title: 123 }; favouriteBook: null }>>(false); // hard to test failures
-    // assert<IsAssignable<FilterQuery<Author2>, { books: { title: Date }; favouriteBook: null }>>(false); // hard to test failures
+      let ok02: FilterQuery<Book2>;
+      ok02 = { publisher: { $ne: undefined } };
+      ok02 = { publisher: { name: 'test' } };
+      ok02 = { author: 123 };
+      ok02 = { tags: ['1', '2'] };
+      ok02 = { tags: '1' };
+      ok02 = { author: { favouriteBook: [] as Book2[] } };
+      ok02 = { author: { favouriteBook: { title: '1' } } };
+      ok02 = { author: { favouriteBook: { tags: {} as BookTag2 } } };
+      ok02 = { author: { favouriteBook: { tags: [] as BookTag2[] } } };
+      ok02 = { author: { favouriteBook: { tags: ['1', '2'] } } };
 
-    assert<IsAssignable<FilterQuery<Author2>, { born: Date }>>(true);
-    // assert<IsAssignable<FilterQuery<Author2>, { born: number }>>(false); // hard to test failures
-    // assert<IsAssignable<FilterQuery<Author2>, { born: string }>>(false); // hard to test failures
+      let ok03: FilterQuery<FooParam2>;
+      ok03 = { bar: 1, baz: 2 };
+      ok03 = { bar: { name: '1' }, baz: { name: '2' } };
 
-    assert<IsAssignable<FilterQuery<Author2>, { age: { $in: [1] } }>>(true);
-    // assert<IsAssignable<FilterQuery<Author2>, { age: { $in: ['1'] } }>>(false); // hard to test failures
-    // assert<IsAssignable<FilterQuery<Author2>, { age: { $gta: ['1'] } }>>(false); // hard to test failures
+      let ok04: FilterQuery<Book2>;
+      ok04 = { publisher: 1 };
+      ok04 = { publisher: { name: 'name' } };
+      ok04 = { publisher: { name: /name/ } };
+      ok04 = { publisher: { name: { $like: 'name' } } };
+    });
 
-    assert<IsAssignable<FilterQuery<Author2>, { age: { $gte: number } }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { age: { $gte: number }; born: { $lt: Date }; $and: [{ name: { $ne: 'John' } }, { name: { $in: ['Ben', 'Paul'] } }] }>>(true);
-    assert<Has<FilterQuery<Author2>, { favouriteBook?: Book2 }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { $and: [{ favouriteBook: Book2 }, { name: string }] }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { $and: [{ favouriteBook: { title: string } }, { name: string }] }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { $and: [{ favouriteBook: string }, { name: string }] }>>(true);
-    assert<Has<FilterQuery<Author2>, Author2>>(true);
-    assert<Has<FilterQuery<Author2>, number>>(true);
-    assert<Has<FilterQuery<Author2>, { favouriteBook?: Query<Book2> }>>(true);
-    assert<Has<FilterQuery<Book2>, { author: { favouriteBook?: Query<Book2> } }>>(true);
-    assert<Has<FilterQuery<Book2>, { author: { favouriteBook?: { title?: string } } }>>(true);
-    assert<IsAssignable<FilterQuery<Book2>, { author: { favouriteBook: { tags: FilterValue<BookTag2> } } }>>(true);
-    assert<IsAssignable<FilterQuery<Book2>, { author: { favouriteBook: { tags: BookTag2[] } } }>>(true);
-    assert<IsAssignable<FilterQuery<Book2>, { author: { favouriteBook: { tags: string[] } } }>>(true);
-    assert<IsAssignable<FilterQuery<Book2>, { tags: string[] }>>(true);
-    assert<IsAssignable<FilterQuery<Book2>, { tags: string }>>(true);
-    assert<IsAssignable<FilterQuery<Author2>, { books: { tags: bigint[] } }>>(true);
-  });
-
-  test('FilterQuery ok assignments', async () => {
-    let ok01: FilterQuery<Author2>;
-    ok01 = {};
-    ok01 = { born: new Date() };
-    ok01 = { born: { $gte: new Date() } };
-    ok01 = { age: { $gte: 1 } };
-    ok01 = { favouriteBook: '1' };
-    ok01 = { favouriteBook: ['1', '2'] };
-    ok01 = { favouriteBook: null };
-    ok01 = { books: { author: { born: new Date() } }, favouriteBook: null };
-    ok01 = { books: { author: { born: new Date() } } };
-    ok01 = { books: { author: { born: new Date() } }, favouriteBook: {} as Book2 };
-    ok01 = { books: { tags: { name: 'asd' } } };
-    ok01 = { books: { tags: '1' } };
-    ok01 = { books: { tags: { books: { title: 'asd' } } } };
-    ok01 = { name: 'asd' };
-    ok01 = { $or: [{ name: 'asd' }, { age: 18 }] };
-
-    let ok02: FilterQuery<Book2>;
-    ok02 = { publisher: { $ne: undefined } };
-    ok02 = { publisher: { name: 'test' } };
-
-    let ok03: FilterQuery<FooParam2>;
-    ok03 = { bar: 1, baz: 2 };
-    ok03 = { bar: { name: '1' }, baz: { name: '2' } };
-
-    let ok04: FilterQuery<Book2>;
-    ok04 = { publisher: 1 };
-    ok04 = { publisher: { name: 'name' } };
-    ok04 = { publisher: { name: /name/ } };
-    ok04 = { publisher: { name: { $like: 'name' } } };
-  });
-
-  test('FilterQuery bad assignments', async () => {
-    let fail01: FilterQuery<Author2>;
-    // @ts-expect-error
-    fail01 = { books: { author: { born: 123 } }, favouriteBook: null };
-    // @ts-expect-error
-    fail01 = { born: 123 };
-    // @ts-expect-error
-    fail01 = { books: { author: { born: 123 } }, favouriteBook: null };
-    // @ts-expect-error
-    fail01 = { books: { author: { born: '123' } }, favouriteBook: null };
-    // @ts-expect-error
-    fail01 = { age: { $gta: 1 } };
-    // @ts-expect-error
-    fail01 = { ago: { $gte: 1 } };
-    // @ts-expect-error
-    fail01 = { ago: { $gta: 1 } };
-    // @ts-expect-error
-    fail01 = { favouriteBook: 1 };
-    // @ts-expect-error
-    fail01 = { favouriteBook: 1 };
-    // @ts-expect-error
-    fail01 = { favouriteBook: [1, '2'] };
-    // @ts-expect-error
-    fail01 = { favouriteBook: [1, 2] };
-    // @ts-expect-error
-    fail01 = { books: { tags: { name: 1 } } };
-    // @ts-expect-error
-    fail01 = { books: { tags: true } };
-    // @ts-expect-error
-    fail01 = { books: { tags: { books: { title: 123 } } } };
-
-    let fail02: FilterQuery<Book2>;
-    // @ts-expect-error
-    fail02 = { author: { born: 123 } };
-    // @ts-expect-error
-    fail02 = { author: { born: '123' } };
-    // @ts-expect-error
-    fail02 = { author: { born: { $or: ['123'] } } };
+    test('bad assignments', async () => {
+      let fail01: FilterQuery<Author2>;
+      // @ts-expect-error
+      fail01 = '1';
+      // @ts-expect-error
+      fail01 = { age: { $gta: 1 } };
+      // @ts-expect-error
+      fail01 = { ago: { $gte: 1 } };
+      // @ts-expect-error
+      fail01 = { ago: { $gta: 1 } };
+      // @ts-expect-error
+      fail01 = { favouriteBook: 1 };
+      // @ts-expect-error
+      fail01 = { favouriteBook: 1 };
+      // @ts-expect-error
+      fail01 = { favouriteBook: [1, '2'] };
+      // @ts-expect-error
+      fail01 = { favouriteBook: [1, 2] };
+      // @ts-expect-error
+      fail01 = { books: { tags: { name: 1 } } };
+      // @ts-expect-error
+      fail01 = { books: { tags: true } };
+      // @ts-expect-error
+      fail01 = { books: { tags: { books: { title: 123 } } } };
+      // @ts-expect-error
+      fail01 = { books: { author: '123' } };
+      // @ts-expect-error
+      fail01 = { books: { title: 123 }, favouriteBook: null };
+      // @ts-expect-error
+      fail01 = { books: { title: new Date() }, favouriteBook: null };
+      // @ts-expect-error
+      fail01 = { born: false };
+      // @ts-expect-error
+      fail01 = { age: { $in: ['1'] } };
+      // @ts-expect-error
+      fail01 = { age: { $gta: ['1'] } };
+    });
   });
 
 });

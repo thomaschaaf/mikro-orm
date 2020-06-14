@@ -133,7 +133,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
 
     entity = this.merge(entityName, data as EntityData<T>, options.refresh) as T;
-    await this.lockAndPopulate(entityName, entity, where, options);
+    await this.lockAndPopulate<T, P>(entityName, entity, where, options);
 
     return entity as Loaded<T, P>;
   }
@@ -144,15 +144,15 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
    * or via `Configuration.findOneOrFailHandler` globally.
    */
   async findOneOrFail<T, P extends Populate<T> = []>(entityName: EntityName<T>, where: FilterQuery<T>, options: FindOneOrFailOptions<T, P> = {}): Promise<Loaded<T, P>> {
-    const entity = await this.findOne(entityName, where, options);
+    const entity = await this.findOne<T, P>(entityName, where, options);
 
     if (!entity) {
-      const failHandler = options.failHandler || this.config.get('findOneOrFailHandler');
+      const failHandler = options.failHandler || this.config.get('findOneOrFailHandler')!;
       entityName = Utils.className(entityName);
       throw failHandler(entityName, where as Dictionary);
     }
 
-    return entity as Loaded<T, P>;
+    return entity;
   }
 
   /**
@@ -444,7 +444,7 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
     }
 
     if (parts.length > 0) {
-      return this.canPopulate(props[p].type, parts.join('.'));
+      return this.canPopulate<T>(props[p].type, parts.join('.'));
     }
 
     return ret;
@@ -459,13 +459,13 @@ export class EntityManager<D extends IDatabaseDriver = IDatabaseDriver> {
 
     const entityName = (entities[0] as unknown as Constructor<any>).constructor.name;
     const preparedPopulate = this.preparePopulate<T, P>(entityName, populate);
-    await this.entityLoader.populate(entityName, entities, preparedPopulate, where, orderBy, refresh, validate);
+    await this.entityLoader.populate<T>(entityName, entities, preparedPopulate, where, orderBy, refresh, validate);
 
     return entities as Loaded<T, P>[];
   }
 
   async populateOne<T, P extends Populate<T> = []>(entity: T, populate: P, where: FilterQuery<T> = {}, orderBy: QueryOrderMap = {}, refresh = false, validate = true): Promise<Loaded<T, P>> {
-    const ret = await this.populate([entity], populate, where, orderBy, refresh, validate);
+    const ret = await this.populate<T, P>([entity], populate, where, orderBy, refresh, validate);
     return ret[0];
   }
 

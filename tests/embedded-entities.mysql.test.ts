@@ -16,6 +16,8 @@ class Address1 {
   @Property()
   country?: string;
 
+  [PrimaryKeyProp]?: never;
+
   constructor(street?: string, postalCode?: string, city?: string, country?: string) {
     this.street = street;
     this.postalCode = postalCode;
@@ -39,6 +41,8 @@ class Address2 {
 
   @Property()
   country!: string;
+
+  [PrimaryKeyProp]?: never;
 
   constructor(street: string, city: string, country: string, postalCode?: string) {
     this.street = street;

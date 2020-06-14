@@ -866,11 +866,11 @@ describe('EntityManagerMySql', () => {
     orm.em.clear();
 
     const a1 = await orm.em.find(Author2, author, { populate: ['books'], orderBy: { books: { title: QueryOrder.DESC } } });
-    expect(a1[0].books.getItems().map(b => b.title)).toEqual(['b5', 'b4', 'b3', 'b2', 'b1']);
+    expect(a1[0].books.get().map(b => b.title)).toEqual(['b5', 'b4', 'b3', 'b2', 'b1']);
     orm.em.clear();
 
     const a2 = await orm.em.findOneOrFail(Author2, author, { populate: ['books'], orderBy: { books: { title: QueryOrder.DESC } } });
-    expect(a2.books.getItems().map(b => b.title)).toEqual(['b5', 'b4', 'b3', 'b2', 'b1']);
+    expect(a2.books.get().map(b => b.title)).toEqual(['b5', 'b4', 'b3', 'b2', 'b1']);
     orm.em.clear();
 
     const a3 = await orm.em.findOneOrFail(Author2, { books: { tags: { name: { $in: ['silly', 'strange'] } } } }, { populate: ['books.tags'], orderBy: { books: { tags: { name: QueryOrder.DESC }, title: QueryOrder.ASC } } });
